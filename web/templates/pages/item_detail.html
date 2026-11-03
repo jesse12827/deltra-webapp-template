@@ -1,0 +1,24 @@
+{{define "content"}}
+{{$it := .Data.Item}}
+<div class="page-head">
+  <h1>{{$it.Title}}</h1>
+  <a class="button" href="/items/{{$it.ID}}/edit">Edit</a>
+</div>
+<dl class="details">
+  <dt>Status</dt><dd>{{$it.Status}}</dd>
+  <dt>Due date</dt><dd>{{with date $it.DueOn}}{{.}}{{else}}<span class="muted">None</span>{{end}}</dd>
+  <dt>Description</dt><dd class="prewrap">{{with $it.Description}}{{.}}{{else}}<span class="muted">None</span>{{end}}</dd>
+  <dt>Created</dt><dd>{{datetime $it.CreatedAt}}</dd>
+  <dt>Last updated</dt><dd>{{datetime $it.UpdatedAt}}</dd>
+</dl>
+
+<h2>History</h2>
+<table>
+  <thead><tr><th scope="col">When</th><th scope="col">Action</th><th scope="col">Changes</th></tr></thead>
+  <tbody>
+    {{range .Data.History}}
+    <tr><td>{{datetime .OccurredAt}}</td><td>{{.Action}}</td><td><code>{{printf "%s" .Changes}}</code></td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

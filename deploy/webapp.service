@@ -1,0 +1,43 @@
+# systemd unit. Installed by the Approver as /etc/systemd/system/webapp.service.
+# Web-App Development Stack v2.0, Section 15. See docs/operations/runbook.md.
+[Unit]
+Description=webapp (Deltra web application)
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=webapp
+Group=webapp
+ExecStart=/opt/webapp/current/webapp serve
+EnvironmentFile=/etc/webapp/webapp.env
+# Secrets as encrypted systemd credentials (Section 10.8), created with:
+#   systemd-creds encrypt --name=entra-client-secret secret.txt /etc/webapp/credentials/entra-client-secret.cred
+LoadCredentialEncrypted=entra-client-secret:/etc/webapp/credentials/entra-client-secret.cred
+Restart=on-failure
+RestartSec=5s
+
+# Hardening (Section 15)
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+{{define "content"}}
+<h1>Dashboard</h1>
+<section class="cards" aria-label="Items by status">
+  {{range .Data.Counts}}
+  <a class="card" href="/items?status={{.Status}}">
+    <span class="card-label">{{.Status}}</span>
+    <span class="card-value">{{.Total}}</span>
+  </a>
+  {{else}}
+  <p>No items yet.</p>
+  {{end}}
+</section>
+{{end}}

@@ -1,0 +1,21 @@
+{{define "content"}}
+<h1>Audit log</h1>
+<p class="muted">The 200 most recent events. Audit events cannot be changed or deleted.</p>
+<table>
+  <thead>
+    <tr><th scope="col">When</th><th scope="col">User ID</th><th scope="col">Action</th><th scope="col">Record</th><th scope="col">Detail</th><th scope="col">Request</th></tr>
+  </thead>
+  <tbody>
+    {{range .Data.Events}}
+    <tr>
+      <td>{{datetime .OccurredAt}}</td>
+      <td>{{with .UserID}}{{.}}{{else}}<span class="muted">—</span>{{end}}</td>
+      <td>{{.Action}}</td>
+      <td>{{.RecordType}}{{with .RecordID}} #{{.}}{{end}}</td>
+      <td><code>{{printf "%s" .Changes}}</code></td>
+      <td><code>{{.RequestID}}</code></td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

@@ -1,0 +1,14 @@
+# Build output
+/bin/
+
+# Local development environment and secrets — never commit
+/.env
+/.env.*
+*.pem
+*.key
+
+# Editor and OS files
+.DS_Store
+*.swp
+.idea/
+.vscode/

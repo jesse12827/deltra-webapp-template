@@ -1,0 +1,25 @@
+# sqlc compiles db/queries/*.sql into Go code in internal/dbgen.
+# Web-App Development Stack v2.0, Section 9.5. Run with: make generate
+version: "2"
+sql:
+  - engine: "postgresql"
+    schema: "db/migrations"
+    queries: "db/queries"
+    gen:
+      go:
+        package: "dbgen"
+        out: "internal/dbgen"
+        sql_package: "pgx/v5"
+        emit_pointers_for_null_types: true
+        emit_empty_slices: true
+        overrides:
+          - db_type: "timestamptz"
+            go_type: "time.Time"
+          - db_type: "date"
+            nullable: true
+            go_type:
+              import: "time"
+              type: "Time"
+              pointer: true
+          - db_type: "date"
+            go_type: "time.Time"

@@ -1,0 +1,45 @@
+{{define "layout"}}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="htmx-config" content='{"includeIndicatorStyles": false, "allowEval": false, "allowScriptTags": false}'>
+  <title>{{.Title}} · Webapp</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script src="/static/vendor/htmx-2.0.11.min.js" defer></script>
+  <script src="/static/js/app.js" type="module"></script>
+</head>
+<body>
+{{if .User}}
+  <div class="shell">
+    <nav class="sidebar" aria-label="Main">
+      <div class="sidebar-head">
+        <span class="brand">Webapp</span>
+        <button type="button" class="sidebar-toggle" data-sidebar-toggle aria-expanded="true" aria-controls="sidebar-links">
+          <span class="visually-hidden">Collapse navigation</span>☰
+        </button>
+      </div>
+      <ul id="sidebar-links">
+        <li><a href="/" {{if eq .Nav "dashboard"}}aria-current="page"{{end}}><span class="icon" aria-hidden="true">▦</span><span class="label">Dashboard</span></a></li>
+        <li><a href="/items" {{if eq .Nav "items"}}aria-current="page"{{end}}><span class="icon" aria-hidden="true">≡</span><span class="label">Items</span></a></li>
+        {{if .User.IsAdmin}}
+        <li><a href="/admin/audit" {{if eq .Nav "admin"}}aria-current="page"{{end}}><span class="icon" aria-hidden="true">⚙</span><span class="label">Admin</span></a></li>
+        {{end}}
+      </ul>
+      <div class="sidebar-foot">
+        <span class="label">{{.User.DisplayName}}</span>
+        <form method="post" action="/signout"><button type="submit" class="link-button">Sign out</button></form>
+      </div>
+    </nav>
+    <main id="main" class="content">
+      {{template "content" .}}
+    </main>
+  </div>
+{{else}}
+  <main id="main" class="content content-narrow">
+    {{template "content" .}}
+  </main>
+{{end}}
+</body>
+</html>
+{{end}}

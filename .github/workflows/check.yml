@@ -1,0 +1,36 @@
+# Runs every quality gate on each Pull Request and on main (Web-App Development Stack v2.0, Section 13.2).
+# Changes to this file are Critical changes (Change Management Standard, Section 44).
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # full history for secret scanning
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: make tools
+      - run: echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - run: make check
+        env:
+          TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable

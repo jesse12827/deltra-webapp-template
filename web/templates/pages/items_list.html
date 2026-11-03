@@ -1,0 +1,62 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>Items</h1>
+  {{if .User}}<a class="button" href="/items/new">New item</a>{{end}}
+</div>
+
+<form class="filters" method="get" action="/items"
+      hx-get="/items" hx-target="#results" hx-select="#results" hx-swap="outerHTML" hx-push-url="true"
+      hx-trigger="submit, input changed delay:400ms from:#q, change from:select">
+  <div class="filter">
+    <label for="q">Search title</label>
+    <input id="q" name="q" type="search" value="{{.Data.Q}}" autocomplete="off">
+  </div>
+  <div class="filter">
+    <label for="status">Status</label>
+    <select id="status" name="status">
+      <option value="">All</option>
+      {{range .Data.Statuses}}<option value="{{.}}" {{if eq . $.Data.Status}}selected{{end}}>{{.}}</option>{{end}}
+    </select>
+  </div>
+  <div class="filter">
+    <label for="size">Per page</label>
+    <select id="size" name="size">
+      {{range .Data.PageSizes}}<option value="{{.}}" {{if eq . $.Data.Page.Size}}selected{{end}}>{{.}}</option>{{end}}
+    </select>
+  </div>
+  <input type="hidden" name="sort" value="{{.Data.Sort}}">
+  <button type="submit">Apply</button>
+</form>
+
+{{template "results" .}}
+{{end}}
+
+{{define "results"}}
+<section id="results" aria-live="polite">
+  {{if .Data.Page.Items}}
+  <table>
+    <thead>
+      <tr>
+        <th scope="col"><a href="{{.Data.SortTitle}}">Title</a></th>
+        <th scope="col">Status</th>
+        <th scope="col"><a href="{{.Data.SortDue}}">Due</a></th>
+        <th scope="col">Updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .Data.Page.Items}}
+      <tr>
+        <td><a href="/items/{{.ID}}">{{.Title}}</a></td>
+        <td>{{.Status}}</td>
+        <td>{{date .DueOn}}</td>
+        <td>{{datetime .UpdatedAt}}</td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+  {{template "pagination" .Data}}
+  {{else}}
+  <p class="empty">No items match your search and filters.</p>
+  {{end}}
+</section>
+{{end}}

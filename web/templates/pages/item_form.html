@@ -1,0 +1,50 @@
+{{define "content"}}
+{{$v := .Data}}
+<h1>{{if $v.ID}}Edit item{{else}}New item{{end}}</h1>
+
+{{if $v.Conflict}}
+<div class="alert" role="alert">
+  This record was changed by someone else after you opened it. Your changes were not saved.
+  <a href="/items/{{$v.ID}}">Reload the latest version</a> and make your changes again.
+</div>
+{{end}}
+{{if $v.Errors}}<div class="alert" role="alert">Please correct the fields marked below.</div>{{end}}
+
+<form method="post" action="{{if $v.ID}}/items/{{$v.ID}}{{else}}/items{{end}}" class="form" novalidate>
+  {{if $v.ID}}<input type="hidden" name="version" value="{{$v.Version}}">{{end}}
+
+  <div class="field">
+    <label for="title">Title <span class="required">(required)</span></label>
+    <input id="title" name="title" value="{{$v.Input.Title}}" maxlength="200" required
+           {{with index $v.Errors "title"}}aria-invalid="true" aria-describedby="title-error"{{end}}>
+    {{with index $v.Errors "title"}}<p class="field-error" id="title-error">{{.}}</p>{{end}}
+  </div>
+
+  <div class="field">
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="5" maxlength="4000"
+              {{with index $v.Errors "description"}}aria-invalid="true" aria-describedby="description-error"{{end}}>{{$v.Input.Description}}</textarea>
+    {{with index $v.Errors "description"}}<p class="field-error" id="description-error">{{.}}</p>{{end}}
+  </div>
+
+  <div class="field">
+    <label for="status">Status</label>
+    <select id="status" name="status" {{with index $v.Errors "status"}}aria-invalid="true" aria-describedby="status-error"{{end}}>
+      {{range $v.Statuses}}<option value="{{.}}" {{if eq . $v.Input.Status}}selected{{end}}>{{.}}</option>{{end}}
+    </select>
+    {{with index $v.Errors "status"}}<p class="field-error" id="status-error">{{.}}</p>{{end}}
+  </div>
+
+  <div class="field">
+    <label for="due_on">Due date</label>
+    <input id="due_on" name="due_on" type="date" value="{{$v.Input.DueOn}}"
+           {{with index $v.Errors "due_on"}}aria-invalid="true" aria-describedby="due_on-error"{{end}}>
+    {{with index $v.Errors "due_on"}}<p class="field-error" id="due_on-error">{{.}}</p>{{end}}
+  </div>
+
+  <div class="actions">
+    <button type="submit">Save</button>
+    <a href="{{if $v.ID}}/items/{{$v.ID}}{{else}}/items{{end}}">Cancel</a>
+  </div>
+</form>
+{{end}}

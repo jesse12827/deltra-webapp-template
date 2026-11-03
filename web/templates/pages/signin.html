@@ -1,0 +1,21 @@
+{{define "content"}}
+<h1>Sign in</h1>
+{{if .Data.DevMode}}
+  <p class="notice">Development sign-in. Choose a synthetic user. This page never appears in production.</p>
+  <ul class="user-picker">
+    {{range .Data.Users}}
+    <li>
+      <form method="post" action="/signin/dev">
+        <input type="hidden" name="user_id" value="{{.ID}}">
+        <button type="submit">{{.DisplayName}} <span class="muted">({{.Role}})</span></button>
+      </form>
+    </li>
+    {{else}}
+    <li>No users yet. Run <code>make synth</code> to load synthetic data.</li>
+    {{end}}
+  </ul>
+{{else}}
+  <p>Sign in with your Deltra Microsoft work account.</p>
+  <p><a class="button" href="/signin/entra">Sign in with Microsoft</a></p>
+{{end}}
+{{end}}
