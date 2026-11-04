@@ -1,6 +1,6 @@
 {{define "content"}}
 <h1>Dashboard</h1>
-<section class="cards" aria-label="Items by status">
+<section class="content-grid" aria-label="Items by status">
   {{range .Data.Counts}}
   <a class="card" href="/items?status={{.Status}}">
     <span class="card-label">{{.Status}}</span>

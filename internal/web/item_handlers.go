@@ -25,7 +25,7 @@ func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
 		s.serverError(w, r, err)
 		return
 	}
-	s.render.page(w, r, http.StatusOK, "dashboard", pageData{Title: "Dashboard", Nav: "dashboard", Data: dashboardView{Counts: counts}})
+	s.render.page(w, r, http.StatusOK, "dashboard", pageData{Title: "Dashboard", Data: dashboardView{Counts: counts}})
 }
 
 type itemsListView struct {
@@ -65,7 +65,10 @@ func (s *server) itemsList(w http.ResponseWriter, r *http.Request) {
 	v.SortTitle = link(toggle(v.Sort, "title"), 1)
 	v.SortDue = link(toggle(v.Sort, "due"), 1)
 
-	d := pageData{Title: "Items", Nav: "items", Data: v}
+	d := pageData{Title: "Items", Data: v}
+	// The same URL returns a full page or only #results, so caches must key on HX-Request
+	// (Web-App Development Stack Section 8).
+	w.Header().Set("Vary", "HX-Request")
 	if isHTMX(r, "results") {
 		s.render.block(w, r, http.StatusOK, "items_list", "results", d)
 		return
@@ -117,8 +120,8 @@ type itemDetailView struct {
 
 func (s *server) itemNew(w http.ResponseWriter, r *http.Request) {
 	s.render.page(w, r, http.StatusOK, "item_form", pageData{
-		Title: "New item", Nav: "items",
-		Data: itemFormView{Input: items.Input{Status: "open"}, Statuses: items.Statuses},
+		Title: "New item",
+		Data:  itemFormView{Input: items.Input{Status: "open"}, Statuses: items.Statuses},
 	})
 }
 
@@ -133,8 +136,8 @@ func (s *server) itemCreate(w http.ResponseWriter, r *http.Request) {
 	if ferrs != nil {
 		// Re-show the form with the user's input and an error beside each field.
 		s.render.page(w, r, http.StatusUnprocessableEntity, "item_form", pageData{
-			Title: "New item", Nav: "items",
-			Data: itemFormView{Input: in, Errors: ferrs, Statuses: items.Statuses},
+			Title: "New item",
+			Data:  itemFormView{Input: in, Errors: ferrs, Statuses: items.Statuses},
 		})
 		return
 	}
@@ -154,7 +157,7 @@ func (s *server) itemDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.render.page(w, r, http.StatusOK, "item_detail", pageData{
-		Title: it.Title, Nav: "items", Data: itemDetailView{Item: it, History: history},
+		Title: it.Title, Data: itemDetailView{Item: it, History: history},
 	})
 }
 
@@ -164,7 +167,7 @@ func (s *server) itemEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.render.page(w, r, http.StatusOK, "item_form", pageData{
-		Title: "Edit item", Nav: "items",
+		Title: "Edit item",
 		Data: itemFormView{ID: it.ID, Version: it.Version, Statuses: items.Statuses, Input: items.Input{
 			Title: it.Title, Description: it.Description, Status: it.Status, DueOn: dateString(it.DueOn),
 		}},
@@ -192,11 +195,11 @@ func (s *server) itemUpdate(w http.ResponseWriter, r *http.Request) {
 		s.notFound(w, r)
 	case errors.Is(err, items.ErrConflict):
 		view.Conflict = true
-		s.render.page(w, r, http.StatusConflict, "item_form", pageData{Title: "Edit item", Nav: "items", Data: view})
+		s.render.page(w, r, http.StatusConflict, "item_form", pageData{Title: "Edit item", Data: view})
 	case err != nil:
 		s.serverError(w, r, err)
 	case ferrs != nil:
-		s.render.page(w, r, http.StatusUnprocessableEntity, "item_form", pageData{Title: "Edit item", Nav: "items", Data: view})
+		s.render.page(w, r, http.StatusUnprocessableEntity, "item_form", pageData{Title: "Edit item", Data: view})
 	default:
 		http.Redirect(w, r, "/items/"+strconv.FormatInt(id, 10), http.StatusSeeOther)
 	}
@@ -246,5 +249,5 @@ func (s *server) auditList(w http.ResponseWriter, r *http.Request) {
 		s.serverError(w, r, err)
 		return
 	}
-	s.render.page(w, r, http.StatusOK, "audit", pageData{Title: "Audit log", Nav: "admin", Data: auditView{Events: events}})
+	s.render.page(w, r, http.StatusOK, "audit", pageData{Title: "Audit log", Data: auditView{Events: events}})
 }

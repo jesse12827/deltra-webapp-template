@@ -1,7 +1,8 @@
 {{define "content"}}
 <h1>Audit log</h1>
 <p class="muted">The 200 most recent events. Audit events cannot be changed or deleted.</p>
-<table>
+<div class="table-wrap">
+<table class="data-table">
   <thead>
     <tr><th scope="col">When</th><th scope="col">User ID</th><th scope="col">Action</th><th scope="col">Record</th><th scope="col">Detail</th><th scope="col">Request</th></tr>
   </thead>
@@ -18,4 +19,5 @@
     {{end}}
   </tbody>
 </table>
+</div>
 {{end}}

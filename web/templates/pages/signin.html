@@ -7,7 +7,7 @@
     <li>
       <form method="post" action="/signin/dev">
         <input type="hidden" name="user_id" value="{{.ID}}">
-        <button type="submit">{{.DisplayName}} <span class="muted">({{.Role}})</span></button>
+        <button type="submit" class="button button-plain">{{.DisplayName}}&nbsp;<span class="muted">({{.Role}})</span></button>
       </form>
     </li>
     {{else}}

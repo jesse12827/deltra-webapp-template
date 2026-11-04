@@ -1,0 +1,58 @@
+{{/*
+  The application's navigation, defined once. Real destinations are links; the
+  active link is marked by spa-shell.js (longest-prefix rule), never here.
+  Groups are disclosure buttons controlling a submenu. Replace the example
+  entries (Items, Admin) with the application's own.
+*/}}
+{{define "nav"}}
+<nav class="sidenav" aria-label="Main"
+     hx-boost="true" hx-target="#main-view" hx-select="#main-view"
+     hx-swap="outerHTML show:top" hx-push-url="true"
+     hx-indicator="#navigation-indicator">
+    <div class="sidenav-header">
+        <span class="logo">Webapp</span>
+        <button type="button" class="icon-btn" id="sidebar-toggle"
+                aria-controls="sidenav-list" aria-expanded="true" aria-label="Collapse sidebar">
+            <svg class="nav-icon toggle-icon" aria-hidden="true"><use href="#icon-collapse"></use></svg>
+        </button>
+    </div>
+
+    <ul class="nav-list" id="sidenav-list">
+        <li>
+            <a class="nav-link" href="/" aria-label="Dashboard" title="Dashboard">
+                <svg class="nav-icon" aria-hidden="true"><use href="#icon-dashboard"></use></svg>
+                <span class="nav-label">Dashboard</span>
+            </a>
+        </li>
+        <li>
+            <a class="nav-link" href="/items" aria-label="Items" title="Items">
+                <svg class="nav-icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+                <span class="nav-label">Items</span>
+            </a>
+        </li>
+        {{if .User.IsAdmin}}
+        <li>
+            <button type="button" class="nav-toggle" aria-label="Admin" title="Admin"
+                    aria-controls="submenu-admin" aria-expanded="false">
+                <svg class="nav-icon" aria-hidden="true"><use href="#icon-admin"></use></svg>
+                <span class="nav-label">Admin</span>
+                <svg class="nav-icon nav-arrow" aria-hidden="true"><use href="#icon-chevron"></use></svg>
+            </button>
+            <ul class="submenu" id="submenu-admin" hidden>
+                <li><a class="nav-link" href="/admin/audit"><span class="nav-label">Audit log</span></a></li>
+            </ul>
+        </li>
+        {{end}}
+        <li>
+            <!-- Not boosted: signing out leaves the shell for the sign-in page. -->
+            <form class="nav-form" method="post" action="/signout" hx-boost="false">
+                <button type="submit" class="nav-link"
+                        aria-label="Sign out {{.User.DisplayName}}" title="Sign out {{.User.DisplayName}}">
+                    <svg class="nav-icon" aria-hidden="true"><use href="#icon-signout"></use></svg>
+                    <span class="nav-label">Sign out</span>
+                </button>
+            </form>
+        </li>
+    </ul>
+</nav>
+{{end}}

@@ -1,44 +1,46 @@
 {{define "layout"}}<!doctype html>
-<html lang="en">
+<html lang="en" data-sidebar="expanded">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="htmx-config" content='{"includeIndicatorStyles": false, "allowEval": false, "allowScriptTags": false}'>
-  <title>{{.Title}} · Webapp</title>
-  <link rel="stylesheet" href="/static/css/app.css">
-  <script src="/static/vendor/htmx-2.0.11.min.js" defer></script>
-  <script src="/static/js/app.js" type="module"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <!-- htmx configuration, declared once (Web-App Development Stack Section 8):
+         no page snapshots in browser storage; nothing that needs inline styles or eval. -->
+    <meta name="htmx-config" content='{"historyCacheSize": 0, "includeIndicatorStyles": false, "allowEval": false, "allowScriptTags": false}'>
+    <title>{{.Title}} · Webapp</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- spa-shell.js is deliberately NOT deferred: it applies the stored sidebar
+         state before the page paints. htmx IS deferred; deferred scripts still
+         run before DOMContentLoaded, when spa-shell.js wires its htmx hooks. -->
+    <script src="/static/js/spa-shell.js"></script>
+    <script src="/static/vendor/htmx-2.0.11.min.js" defer></script>
 </head>
 <body>
 {{if .User}}
-  <div class="shell">
-    <nav class="sidebar" aria-label="Main">
-      <div class="sidebar-head">
-        <span class="brand">Webapp</span>
-        <button type="button" class="sidebar-toggle" data-sidebar-toggle aria-expanded="true" aria-controls="sidebar-links">
-          <span class="visually-hidden">Collapse navigation</span>☰
-        </button>
-      </div>
-      <ul id="sidebar-links">
-        <li><a href="/" {{if eq .Nav "dashboard"}}aria-current="page"{{end}}><span class="icon" aria-hidden="true">▦</span><span class="label">Dashboard</span></a></li>
-        <li><a href="/items" {{if eq .Nav "items"}}aria-current="page"{{end}}><span class="icon" aria-hidden="true">≡</span><span class="label">Items</span></a></li>
-        {{if .User.IsAdmin}}
-        <li><a href="/admin/audit" {{if eq .Nav "admin"}}aria-current="page"{{end}}><span class="icon" aria-hidden="true">⚙</span><span class="label">Admin</span></a></li>
-        {{end}}
-      </ul>
-      <div class="sidebar-foot">
-        <span class="label">{{.User.DisplayName}}</span>
-        <form method="post" action="/signout"><button type="submit" class="link-button">Sign out</button></form>
-      </div>
-    </nav>
-    <main id="main" class="content">
-      {{template "content" .}}
-    </main>
-  </div>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    {{template "icons"}}
+    <div class="page-shell">
+        {{template "nav" .}}
+        <main class="page-main" id="main-content">
+            <div class="alert" id="app-error" role="alert" hidden>
+                <span class="alert-text"></span>
+                <button type="button" class="alert-dismiss">Dismiss</button>
+            </div>
+            <div class="main-view" id="main-view" hx-history-elt>
+                {{template "content" .}}
+            </div>
+        </main>
+    </div>
+    <!-- Outside .page-shell and every container-query context, so position: fixed
+         inside modals and toasts resolves to the viewport. -->
+    <div class="overlay-root" id="overlay-root"></div>
+    <!-- Visual progress bar only; spa-shell.js moves focus to the new <h1>. -->
+    <div class="navigation-indicator" id="navigation-indicator" aria-hidden="true"></div>
 {{else}}
-  <main id="main" class="content content-narrow">
-    {{template "content" .}}
-  </main>
+    <main class="signed-out" id="main-content">
+        <div class="main-view" id="main-view">
+            {{template "content" .}}
+        </div>
+    </main>
 {{end}}
 </body>
 </html>

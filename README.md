@@ -5,10 +5,11 @@ The reference template for Deltra web applications: the working implementation o
 this repository (Stack Section 3).
 
 It is a small but complete application. It has Entra ID sign-in (with development sign-in for
-synthetic users), server-side sessions, roles, an append-only audit log, and one **example domain**,
-"items". Items demonstrates every standard pattern: search, filtering, sorting, and pagination;
-validated forms with field-level errors; concurrent-edit protection; status counts on a dashboard;
-and per-record history.
+synthetic users), server-side sessions, roles, an append-only audit log, the Deltra application shell
+(sidebar navigation for desktop and tablet, a bottom tab bar on phones, htmx navigation), four Reviewer
+Agents, and one **example domain**, "items". Items demonstrates every standard pattern: search,
+filtering, sorting, and pagination; validated forms with field-level errors; concurrent-edit
+protection; status counts on a dashboard; and per-record history.
 
 ## Start a new application
 
@@ -16,11 +17,20 @@ and per-record history.
 git clone <template repository> procurement && cd procurement
 rm -rf .git && git init -b main && git add -A && git commit -m "Start from deltra-webapp-template"
 make init NAME=procurement MODULE=github.com/<org>/procurement
+make standards STANDARDS_URL=git@github.com:<org>/deltra-standards.git STANDARDS_REF=<tag>
 ```
 
-Then replace the example domain (`internal/items`, `db/migrations/00002_items.sql`,
-`db/queries/items.sql`, the item templates) with the application's own, guided by its SRS,
-and fill in the "What this application is" section of `CLAUDE.md`.
+Then, as the Approver:
+
+1. Put the approved SRS in `docs/requirements/`.
+2. Fill in the "What this application is" and "own additions" sections of `CLAUDE.md`.
+3. Commit.
+
+The Builder Agent then replaces the example domain (`internal/items`, `db/migrations/00002_items.sql`,
+`db/queries/items.sql`, the item templates, and the Items entry in `web/templates/partials/nav.html`)
+with the application's own, guided by the SRS.
+
+When cloning an existing application, fetch the standards too: `git clone --recurse-submodules <url>`.
 
 ## Prerequisites (development machine)
 
@@ -61,8 +71,12 @@ Fix anything `make check` reports, and commit the result, including `go.sum` and
 | `db/` | All SQL: bootstrap, migrations, queries, operational scripts |
 | `web/` | Templates, CSS, JavaScript, vendored htmx |
 | `deploy/` | Files installed on a server |
-| `docs/` | All documentation: requirements, database, operations runbook, ADRs, decision log, evidence |
-| `.claude/` | Agent permission rules and the Reviewer Agent definition |
+| `docs/` | All documentation: requirements, governing standards (submodule), database, operations runbook, ADRs, decision log, evidence |
+| `.claude/` | Agent permission rules and the four Reviewer Agent definitions |
 
 Each folder has its own README. Agent instructions are in [`CLAUDE.md`](CLAUDE.md).
+
+**Working on the template itself:** the template does not carry the `docs/standards/` submodule, because
+each application attaches its own with `make standards`. When improving the template, start Claude Code
+with the standards repository alongside it: `claude --add-dir ../deltra-standards`.
 Deployment is in [`docs/operations/runbook.md`](docs/operations/runbook.md) and is performed only by the Approver.

@@ -19,7 +19,6 @@ import (
 // pageData is passed to every page template.
 type pageData struct {
 	Title     string
-	Nav       string // active navigation entry: "dashboard", "items", "admin"
 	User      *auth.User
 	RequestID string
 	Data      any

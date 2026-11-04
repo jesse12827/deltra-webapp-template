@@ -23,7 +23,12 @@ Every entry with status **Assumed**, with the agent's recommendation.
 |---|---|---|
 
 ## 6. Review findings
-Reviewer Agent findings for each Pull Request in this milestone, how each was resolved, and any still open.
+One row per Reviewer Agent report in `reviews/`. Every High and Medium finding must show how it was resolved,
+or the decision-log entry recording why it was not (Change Management Standard Sections 42–43).
+
+| Report | Verdict | Finding | Severity | Resolution |
+|---|---|---|---|---|
+| `reviews/srs-reviewer-YYYY-MM-DD.md` | PASS WITH FINDINGS | 2 | Medium | Fixed in commit `abcdef1` |
 
 ## 7. Security and quality results
 Output summary of `make check`: lint (including gosec), govulncheck, gitleaks, tests with race detector.

@@ -21,6 +21,10 @@
       "Bash(gh pr checks:*)",
       "Bash(gh pr list:*)"
     ],
+    "ask": [
+      "Edit(./docs/requirements/**)",
+      "Write(./docs/requirements/**)"
+    ],
     "deny": [
       "Bash(ssh:*)",
       "Bash(scp:*)",
@@ -33,6 +37,7 @@
       "Bash(git push --force-with-lease:*)",
       "Bash(git reset --hard:*)",
       "Bash(git tag:*)",
+      "Bash(git submodule:*)",
       "Bash(gh release:*)",
       "Read(./.env)",
       "Read(./.env.*)",
@@ -44,10 +49,12 @@
       "Edit(./.claude/**)",
       "Edit(./.golangci.yml)",
       "Edit(./.github/workflows/**)",
+      "Edit(./docs/standards/**)",
       "Write(./CLAUDE.md)",
       "Write(./.claude/**)",
       "Write(./.golangci.yml)",
-      "Write(./.github/workflows/**)"
+      "Write(./.github/workflows/**)",
+      "Write(./docs/standards/**)"
     ]
   }
 }

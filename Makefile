@@ -111,6 +111,30 @@ build: ## Build the release binary into bin/
 clean: ## Remove build output
 	rm -rf bin
 
+## ---------------------------------------------------------------- governing documents
+
+# docs/standards/ is a Git submodule of deltra-standards, pinned to the versions
+# in force (Web-App Development Stack Section 6). Moving the pin is a Critical
+# change, made only by the Approver. Agents are denied `git submodule`.
+STANDARDS_URL ?=
+STANDARDS_REF ?=
+
+.PHONY: standards
+standards: ## Attach docs/standards to deltra-standards (Approver; once per application)
+	@test -n "$(STANDARDS_URL)" || { echo "Usage: make standards STANDARDS_URL=<deltra-standards repository URL> [STANDARDS_REF=<tag or commit>]"; exit 1; }
+	@test ! -e docs/standards || { echo "docs/standards already exists"; exit 1; }
+	git submodule add $(STANDARDS_URL) docs/standards
+	@if [ -n "$(STANDARDS_REF)" ]; then git -C docs/standards checkout -q $(STANDARDS_REF) && git add docs/standards; fi
+	@echo "Pinned docs/standards at $$(git -C docs/standards rev-parse --short HEAD). Commit it, and record the version in the decision log."
+
+.PHONY: standards-pin
+standards-pin: ## Move docs/standards to another deltra-standards version (Approver; Critical change)
+	@test -n "$(STANDARDS_REF)" || { echo "Usage: make standards-pin STANDARDS_REF=<tag or commit>"; exit 1; }
+	git -C docs/standards fetch -q origin
+	git -C docs/standards checkout -q $(STANDARDS_REF)
+	git add docs/standards
+	@echo "docs/standards now at $(STANDARDS_REF). Run the doc-consistency-reviewer, then commit."
+
 ## ---------------------------------------------------------------- new application
 
 # Usage: make init NAME=procurement [MODULE=github.com/deltra/procurement]
@@ -131,4 +155,4 @@ init: ## Rename the template for a new application
 		go mod edit -module $(MODULE); \
 		grep -rlI --exclude-dir=.git '"deltra/$(NAME)' . | xargs -r sed -i 's#"deltra/$(NAME)#"$(MODULE)#g'; \
 	fi
-	@echo "Initialized $(NAME). Next: update README.md and CLAUDE.md, then run: make generate && go mod tidy && make check"
+	@echo "Initialized $(NAME). Next: make standards STANDARDS_URL=...; fill in CLAUDE.md and README.md; then make generate && go mod tidy && make check"
