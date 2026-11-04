@@ -65,16 +65,11 @@ Fix anything `make check` reports, and commit the result, including `go.sum` and
 
 ## Layout
 
-| Folder | Holds |
-|---|---|
-| `cmd/`, `internal/` | All Go code |
-| `db/` | All SQL: bootstrap, migrations, queries, operational scripts |
-| `web/` | Templates, CSS, JavaScript, vendored htmx |
-| `deploy/` | Files installed on a server |
-| `docs/` | All documentation: requirements, governing standards (submodule), database, operations runbook, ADRs, decision log, evidence |
-| `.claude/` | Agent permission rules and the four Reviewer Agent definitions |
+The folder layout is defined once, in Section 6 of the Web-App Development Stack
+(`docs/standards/Web-App_Development_Stack.md` in an application; `deltra-standards` for the template itself).
+Each top-level folder also has a short README saying what belongs in it.
 
-Each folder has its own README. Agent instructions are in [`CLAUDE.md`](CLAUDE.md).
+Agent instructions are in [`CLAUDE.md`](CLAUDE.md).
 
 **Working on the template itself:** the template does not carry the `docs/standards/` submodule, because
 each application attaches its own with `make standards`. When improving the template, start Claude Code
