@@ -13,18 +13,34 @@ protection; status counts on a dashboard; and per-record history.
 
 ## Start a new application
 
+Conventions (Web-App Development Stack Section 3): the folder, the GitHub repository, and the `make init`
+name are one lowercase name, never tied to a host; `deltra-standards`, this template, and each application
+are sibling folders under one parent folder; the layout comes only from copying this template.
+
+The Approver performs these steps. The example uses `procurement` and the parent folder `~/development`.
+
 ```sh
-git clone <template repository> procurement && cd procurement
-rm -rf .git && git init -b main && git add -A && git commit -m "Start from deltra-webapp-template"
+cd ~/development                                  # holds deltra-standards/ and deltra-webapp-template/
+
+# 1. One copy of the template, with a fresh history
+cp -r deltra-webapp-template procurement
+cd procurement
+rm -rf .git && git init -b main
+git add -A && git commit -m "Start from deltra-webapp-template"
+
+# 2. Adapt the copy: rename it, then link the governing documents (deltra-standards must be on GitHub)
 make init NAME=procurement MODULE=github.com/<org>/procurement
 make standards STANDARDS_URL=git@github.com:<org>/deltra-standards.git STANDARDS_REF=<tag>
+
+# 3. Add the application's own files: its approved SRS, and its CLAUDE.md
+#    (the skeleton with "What this application is" and "own additions" filled in)
+cp <path>/<Application>_Software_Requirements_Specification_v<n>.md docs/requirements/
+editor CLAUDE.md          # fill in the two sections, or copy a prepared CLAUDE.md over the skeleton
+git add -A && git commit -m "Retool for <application>: SRS, CLAUDE.md, standards <tag>"
 ```
 
-Then, as the Approver:
-
-1. Put the approved SRS in `docs/requirements/`.
-2. Fill in the "What this application is" and "own additions" sections of `CLAUDE.md`.
-3. Commit.
+Then create the application's GitHub repository, push `main`, and turn on branch protection
+(Change Management Standard Section 134C). From here on, every change goes through a branch and a Pull Request.
 
 The Builder Agent then replaces the example domain (`internal/items`, `db/migrations/00002_items.sql`,
 `db/queries/items.sql`, the item templates, and the Items entry in `web/templates/partials/nav.html`)
