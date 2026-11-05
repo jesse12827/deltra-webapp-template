@@ -22,8 +22,7 @@
       "Bash(gh pr list:*)"
     ],
     "ask": [
-      "Edit(./docs/requirements/**)",
-      "Write(./docs/requirements/**)"
+      "Edit(./docs/requirements/**)"
     ],
     "deny": [
       "Bash(ssh:*)",
@@ -49,12 +48,7 @@
       "Edit(./.claude/**)",
       "Edit(./.golangci.yml)",
       "Edit(./.github/workflows/**)",
-      "Edit(./docs/standards/**)",
-      "Write(./CLAUDE.md)",
-      "Write(./.claude/**)",
-      "Write(./.golangci.yml)",
-      "Write(./.github/workflows/**)",
-      "Write(./docs/standards/**)"
+      "Edit(./docs/standards/**)"
     ]
   }
 }
