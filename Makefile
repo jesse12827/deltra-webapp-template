@@ -156,4 +156,4 @@ init: ## Rename the template for a new application
 		go mod edit -module $(MODULE); \
 		grep -rlI --exclude-dir=.git '"deltra/$(NAME)' . | xargs -r sed -i 's#"deltra/$(NAME)#"$(MODULE)#g'; \
 	fi
-	@echo "Initialized $(NAME). Next: make standards STANDARDS_URL=...; fill in CLAUDE.md and README.md; then make generate && go mod tidy && make check"
+	@echo "Initialized $(NAME). Next: make standards STANDARDS_URL=... STANDARDS_REF=<tag>; then make check; then add the SRS and fill in CLAUDE.md (README Section 3)"
