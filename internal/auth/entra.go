@@ -106,7 +106,7 @@ func (e *Entra) Finish(w http.ResponseWriter, r *http.Request) (Identity, error)
 
 	tok, err := e.oauth.Exchange(r.Context(), r.URL.Query().Get("code"), oauth2.VerifierOption(verifier))
 	if err != nil {
-		return Identity{}, fmt.Errorf("exchanging authorization code: %w", err)
+		return Identity{}, exchangeError(err)
 	}
 	raw, ok := tok.Extra("id_token").(string)
 	if !ok {
@@ -157,6 +157,27 @@ func identityFromClaims(c idClaims, tenantID string) (Identity, error) {
 		email = c.PreferredUsername
 	}
 	return Identity{TenantID: tid, ObjectID: oid, Email: strings.ToLower(email)}, nil
+}
+
+// exchangeError describes a failed authorization-code exchange for the log.
+// When Entra ID rejects the exchange, it keeps only the HTTP status and the
+// OAuth error code, never the response body, which could repeat the code
+// (security final re-review 2026-11-05, finding 1). Other failures, such as
+// network errors, carry no response body and are wrapped unchanged.
+func exchangeError(err error) error {
+	var re *oauth2.RetrieveError
+	if !errors.As(err, &re) {
+		return fmt.Errorf("exchanging authorization code: %w", err)
+	}
+	status := 0
+	if re.Response != nil {
+		status = re.Response.StatusCode
+	}
+	code := re.ErrorCode
+	if len(code) > 64 {
+		code = code[:64]
+	}
+	return fmt.Errorf("exchanging authorization code: Entra ID returned HTTP %d, error code %q", status, code)
 }
 
 func randomString() (string, error) {

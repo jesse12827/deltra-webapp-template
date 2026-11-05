@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+
+	"golang.org/x/oauth2"
 )
 
 const (
@@ -29,6 +31,40 @@ func TestFinishDoesNotCopyCallbackErrorText(t *testing.T) {
 	}
 	if strings.Contains(err.Error(), injected) {
 		t.Fatalf("error %q contains the callback's error text", err)
+	}
+}
+
+// When Entra ID rejects the code exchange, the logged error keeps only the HTTP
+// status and the OAuth error code, never the response body, which could repeat
+// the authorization code (security final re-review 2026-11-05, finding 1).
+func TestFinishLogsOnlyStatusAndCodeWhenExchangeFails(t *testing.T) {
+	const authCode = "synthetic-authorization-code-0123456789"
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error":"invalid_grant","error_description":"The code ` + authCode + ` has expired.","trace_id":"body-only-marker"}`))
+	}))
+	t.Cleanup(tokenServer.Close)
+
+	e := &Entra{oauth: oauth2.Config{ClientID: "c", Endpoint: oauth2.Endpoint{TokenURL: tokenServer.URL}}}
+	q := url.Values{"state": {"s"}, "code": {authCode}}
+	r := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "https://app.example.test/auth/callback?"+q.Encode(), nil)
+	r.AddCookie(&http.Cookie{Name: flowCookie, Value: "s.n.v", Path: "/", Secure: true, HttpOnly: true, SameSite: http.SameSiteLaxMode})
+
+	_, err := e.Finish(httptest.NewRecorder(), r)
+	if err == nil {
+		t.Fatal("want an error from a rejected exchange")
+	}
+	msg := err.Error()
+	for _, want := range []string{"HTTP 400", `"invalid_grant"`} {
+		if !strings.Contains(msg, want) {
+			t.Errorf("error %q does not contain %s", msg, want)
+		}
+	}
+	for _, leak := range []string{authCode, "body-only-marker", "expired"} {
+		if strings.Contains(msg, leak) {
+			t.Errorf("error %q contains response body text %q", msg, leak)
+		}
 	}
 }
 
