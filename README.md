@@ -17,7 +17,8 @@ Conventions (Web-App Development Stack Section 3): the folder, the GitHub reposi
 name are one lowercase name, never tied to a host; `deltra-standards`, this template, and each application
 are sibling folders under one parent folder; the layout comes only from copying this template.
 
-The Approver performs these steps. The example uses `procurement` and the parent folder `~/development`.
+The Approver performs these steps, after the template's own first build (below) is committed. The example
+uses `procurement` and the parent folder `~/development`.
 
 ```sh
 cd ~/development                                  # holds deltra-standards/ and deltra-webapp-template/
@@ -31,6 +32,7 @@ git add -A && git commit -m "Start from deltra-webapp-template"
 # 2. Adapt the copy: rename it, then link the governing documents (deltra-standards must be on GitHub)
 make init NAME=procurement MODULE=github.com/<org>/procurement
 make standards STANDARDS_URL=git@github.com:<org>/deltra-standards.git STANDARDS_REF=<tag>
+make check                # the renamed copy must still pass every quality gate
 
 # 3. Add the application's own files: its approved SRS, and its CLAUDE.md
 #    (the skeleton with "What this application is" and "own additions" filled in)
@@ -39,8 +41,11 @@ editor CLAUDE.md          # fill in the two sections, or copy a prepared CLAUDE.
 git add -A && git commit -m "Retool for <application>: SRS, CLAUDE.md, standards <tag>"
 ```
 
-Then create the application's GitHub repository, push `main`, and turn on branch protection
-(Change Management Standard Section 134C). From here on, every change goes through a branch and a Pull Request.
+Then create the application's GitHub repository (empty: no README or license), push `main`, and turn on
+branch protection (Change Management Standard Section 134C). In that repository's settings, add the secret
+`STANDARDS_READ_TOKEN`: a fine-grained, read-only GitHub token for `deltra-standards`, which lets continuous
+integration fetch the private `docs/standards/` submodule. From here on, every change goes through a branch
+and a Pull Request.
 
 The Builder Agent then replaces the example domain (`internal/items`, `db/migrations/00002_items.sql`,
 `db/queries/items.sql`, the item templates, and the Items entry in `web/templates/partials/nav.html`)
