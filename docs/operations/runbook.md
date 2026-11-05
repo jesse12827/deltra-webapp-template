@@ -177,14 +177,28 @@ application has a user administration page, the Approver adds users with SQL. Fi
 **Object ID** on their profile in the Microsoft Entra admin center, and the **Tenant ID** on the
 tenant overview (it is the same value as `ENTRA_TENANT_ID`).
 
+Linking an Entra ID account decides who can sign in as the user, so the statement below also
+records a `user.link_entra` audit event (decision D-001; Stack Section 12). It is one statement,
+so the user and the audit event are saved together or not at all. The event has no acting user,
+because the person running the runbook is not signed in to the application.
+
 ```sh
 sudo -u postgres psql -d webapp -v ON_ERROR_STOP=1 \
   -v email='person@deltra.example' -v name='Person Name' -v role='tech' \
   -v tid='<tenant-id>' -v oid='<object-id>' <<'SQL'
-INSERT INTO webapp.users (email, display_name, role, entra_tid, entra_oid)
-VALUES (lower(:'email'), :'name', :'role', :'tid', :'oid');
+WITH new_user AS (
+    INSERT INTO webapp.users (email, display_name, role, entra_tid, entra_oid)
+    VALUES (lower(:'email'), :'name', :'role', :'tid', :'oid')
+    RETURNING id, role, entra_tid, entra_oid
+)
+INSERT INTO webapp.audit_events (action, record_type, record_id, changes)
+SELECT 'user.link_entra', 'user', id,
+       jsonb_build_object('detail', jsonb_build_object(
+           'role', role, 'entra_tid', entra_tid::text, 'entra_oid', entra_oid::text,
+           'source', 'runbook 5.1'))
+FROM new_user;
 SQL
 ```
 
 A person whose Entra ID account is not linked this way is refused at sign-in, and the refusal is
-recorded as a `signin.denied` audit event that names the object ID they signed in with.
+recorded as a `signin.denied` audit event that names the tenant ID and object ID they signed in with.
