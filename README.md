@@ -17,8 +17,12 @@ Conventions (Web-App Development Stack Section 3): the folder, the GitHub reposi
 name are one lowercase name, never tied to a host; `deltra-standards`, this template, and each application
 are sibling folders under one parent folder; the layout comes only from copying this template.
 
-The Approver performs these steps, after the template's own first build (below) is committed. The example
-uses `procurement` and the parent folder `~/development`.
+The Approver performs these steps. The example uses `procurement` and the parent folder `~/development`.
+
+**Before you start:** the template's own first build (below) must be done and committed.
+`ls deltra-webapp-template/go.sum deltra-webapp-template/internal/dbgen` must list both; if either is
+missing, do "First build of the template itself" first. `make init` refuses to run until it is done.
+Replace every `<...>` placeholder below with its real value, angle brackets included.
 
 ```sh
 cd ~/development                                  # holds deltra-standards/ and deltra-webapp-template/
