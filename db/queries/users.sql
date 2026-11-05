@@ -17,6 +17,7 @@ RETURNING *;
 SELECT * FROM users WHERE entra_tid = sqlc.arg(entra_tid) AND entra_oid = sqlc.arg(entra_oid);
 
 -- name: SetUserEntraID :exec
+-- Replaces any earlier link deliberately. Callers audit the change (auth.LinkUser).
 UPDATE users
 SET entra_tid = sqlc.arg(entra_tid), entra_oid = sqlc.arg(entra_oid), updated_at = now()
 WHERE id = sqlc.arg(id);

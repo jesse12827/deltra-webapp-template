@@ -62,8 +62,11 @@ func (s *server) recoverPanics(next http.Handler) http.Handler {
 
 // securityHeaders sets the response headers required by
 // Web-App Development Stack v2.0, Section 10.6. Nginx adds Strict-Transport-Security.
-// Cache-Control: no-store keeps signed-in pages out of shared caches and the
-// browser's back-forward cache; cacheStatic replaces it for /static/.
+//
+// It also sets Cache-Control: no-store, which Section 10.6 does not list: it
+// keeps signed-in pages out of shared caches and the browser's back-forward
+// cache (Phase 0 security review, 2026-11-05, finding 6). cacheStatic
+// replaces it for /static/.
 func securityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()

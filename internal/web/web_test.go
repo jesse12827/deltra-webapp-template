@@ -336,7 +336,7 @@ func TestUnknownRecordShowsNotFound(t *testing.T) {
 }
 
 // Signing in ends any session the browser already had
-// (Stack Section 10.2; security review 2026-11-05, finding 1).
+// (Stack Section 10.2 and security review 2026-11-05, finding 1).
 func TestSignInReplacesExistingSession(t *testing.T) {
 	a := newApp(t)
 	c := a.signIn(a.tech)
@@ -365,7 +365,7 @@ func TestSignInReplacesExistingSession(t *testing.T) {
 }
 
 // The session and its signin.success event commit together
-// (Stack Section 12; security review 2026-11-05, finding 4).
+// (security review 2026-11-05, finding 4).
 func TestSigninAuditFailureLeavesNoSession(t *testing.T) {
 	a := newApp(t)
 	a.failAudit("signin.success")
@@ -397,7 +397,7 @@ func TestSigninDeniedAuditFailureFailsRequest(t *testing.T) {
 }
 
 // An authorization denial that cannot be audited fails the request; access is
-// still refused (Stack Section 12; security review 2026-11-05, finding 5).
+// still refused (security review 2026-11-05, finding 5).
 func TestAccessDeniedAuditFailureFailsRequest(t *testing.T) {
 	a := newApp(t)
 	c := a.signIn(a.tech)
@@ -436,5 +436,19 @@ func TestSignedInPagesAreNotCached(t *testing.T) {
 	}
 	if res, _ := a.get(c, "/static/css/style.css"); res.Header.Get("Cache-Control") != "public, max-age=3600" {
 		t.Errorf("static: Cache-Control %q", res.Header.Get("Cache-Control"))
+	}
+}
+
+// The server refuses to register development sign-in outside development, even
+// if configuration validation were bypassed (security review 2026-11-05, finding 2).
+func TestServerRefusesDevSigninOutsideDevelopment(t *testing.T) {
+	for _, env := range []config.Env{config.Acceptance, config.Production} {
+		_, err := web.New(web.Deps{
+			Config: config.Config{Env: env, AuthMode: config.AuthDev},
+			Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+		})
+		if err == nil {
+			t.Errorf("%s: development sign-in was registered", env)
+		}
 	}
 }

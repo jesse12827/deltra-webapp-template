@@ -71,10 +71,11 @@ func (s *server) entraCallback(w http.ResponseWriter, r *http.Request) {
 		s.denySignin(w, r, nil, "sign-in failed")
 		return
 	}
-	// Match on the tenant ID and object ID only, never on email (Stack Section 10.1).
+	// Match on the tenant ID and object ID only, never on email
+	// (Phase 0 security review, 2026-11-05, finding 3).
 	u, err := auth.FindUser(r.Context(), s.q, id)
 	if errors.Is(err, pgx.ErrNoRows) {
-		s.denySignin(w, r, nil, "no application user for Entra ID object "+id.ObjectID+" ("+id.Email+")")
+		s.denySignin(w, r, nil, "no application user for Entra ID tenant "+id.TenantID+", object "+id.ObjectID)
 		return
 	} else if err != nil {
 		s.serverError(w, r, err)
@@ -85,7 +86,9 @@ func (s *server) entraCallback(w http.ResponseWriter, r *http.Request) {
 
 // completeSignin admits an active user. In one transaction it ends any session
 // the browser already had, starts a new one, and records the audit event, so a
-// failed audit write leaves no session behind (Stack Sections 10.2 and 12).
+// failed audit write leaves no session behind. Stack Section 10.2 requires a
+// new token at sign-in and Section 12 requires the audit event; the single
+// transaction follows the Phase 0 security review (2026-11-05, findings 1 and 4).
 func (s *server) completeSignin(w http.ResponseWriter, r *http.Request, u dbgen.User) {
 	if !u.Active {
 		s.denySignin(w, r, &u.ID, "account inactive")

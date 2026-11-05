@@ -55,7 +55,7 @@ sudo systemctl reload postgresql
 
 ```sh
 sudo install -o root -g webapp -m 0640 deploy/webapp.env.example /etc/webapp/webapp.env
-sudo editor /etc/webapp/webapp.env        # set BASE_URL, ENTRA_TENANT_ID, ENTRA_CLIENT_ID
+sudo editor /etc/webapp/webapp.env        # set BASE_URL, ENTRA_TENANT_ID (the tenant GUID, not a domain name), ENTRA_CLIENT_ID
 
 # Entra ID client secret, encrypted for this host. Type the secret, then Ctrl-D.
 sudo systemd-creds encrypt --name=entra-client-secret - /etc/webapp/credentials/entra-client-secret.cred

@@ -161,6 +161,7 @@ type SetUserEntraIDParams struct {
 	ID       int64
 }
 
+// Replaces any earlier link deliberately. Callers audit the change (auth.LinkUser).
 func (q *Queries) SetUserEntraID(ctx context.Context, arg SetUserEntraIDParams) error {
 	_, err := q.db.Exec(ctx, setUserEntraID, arg.EntraTid, arg.EntraOid, arg.ID)
 	return err

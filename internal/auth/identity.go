@@ -13,8 +13,8 @@ import (
 
 // FindUser returns the application user linked to an Entra ID identity. It
 // matches only on the tenant ID and object ID, never on email, because email
-// and preferred_username can be changed by directory administrators
-// (Web-App Development Stack v2.0, Section 10.1). It returns pgx.ErrNoRows
+// and preferred_username can be changed by directory administrators (Phase 0
+// security review, 2026-11-05, finding 3). It returns pgx.ErrNoRows
 // when no user is linked to the identity.
 func FindUser(ctx context.Context, q *dbgen.Queries, id Identity) (dbgen.User, error) {
 	tid, err := uuidParam(id.TenantID)
@@ -28,7 +28,10 @@ func FindUser(ctx context.Context, q *dbgen.Queries, id Identity) (dbgen.User, e
 	return q.GetUserByEntraID(ctx, dbgen.GetUserByEntraIDParams{EntraTid: tid, EntraOid: oid})
 }
 
-// LinkUser records the Entra ID identity of an application user.
+// LinkUser records the Entra ID identity of an application user. Linking
+// decides who can sign in as the user, so a caller must run it in the same
+// transaction as an audit event (for example "user.link_entra"), passing the
+// transaction's Queries. Linking replaces any earlier link.
 func LinkUser(ctx context.Context, q *dbgen.Queries, userID int64, id Identity) error {
 	tid, err := uuidParam(id.TenantID)
 	if err != nil {

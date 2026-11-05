@@ -19,7 +19,8 @@ Application users. Microsoft Entra ID establishes identity; this table decides a
 | entra_oid | uuid | yes | Entra ID object ID (`oid` claim) of the user's account |
 
 `entra_tid` and `entra_oid` are both set or both empty, and each pair belongs to at most one user.
-Entra ID sign-in matches a user on this pair only (Stack Section 10.1). A user with both empty,
+Entra ID sign-in matches a user on this pair only, never on email (Phase 0 security review,
+2026-11-05, finding 3). A user with both empty,
 such as a synthetic development user, cannot sign in through Entra ID.
 
 Privileges for `webapp_app`: SELECT, INSERT, UPDATE.
