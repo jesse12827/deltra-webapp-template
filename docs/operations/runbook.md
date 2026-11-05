@@ -145,7 +145,9 @@ sudo install -d -o postgres -g postgres -m 0700 /var/backups/webapp
 
 Copy backups off the server according to Deltra's backup practice.
 
-### 4.2 Restore test (SRS AT-17 pattern) — into an isolated database, never over production
+### 4.2 Restore test — into an isolated database, never over production
+
+If the application's SRS has an acceptance test for restore, cite its ID here.
 
 ```sh
 sudo -u postgres createdb -O webapp_owner webapp_restore_test

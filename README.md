@@ -18,7 +18,11 @@ Read the sections below in order: **1** once per machine, **2** once for the tem
 - Debian 13 (or any Linux) with **Go 1.27** and **PostgreSQL 18** installed locally
 - Your PostgreSQL role is a superuser on the local server (for creating disposable test databases)
 - Go's `bin` folder is on your `PATH`, so the tools `make tools` installs can be found
-- Claude Code is installed, and your Git name and email are set (`git config --global user.name` / `user.email`)
+- A C compiler (`gcc`), needed by `go test -race` in `make check`: `sudo apt install gcc`
+- Claude Code is installed: `curl -fsSL https://claude.ai/install.sh | bash` (installs to `~/.local/bin`; if
+  `claude` is not found, add `export PATH="$HOME/.local/bin:$PATH"` to `~/.bashrc` and open a new terminal),
+  then sign in once with `claude auth login`
+- Your Git name and email are set (`git config --global user.name` / `user.email`)
 
 Check:
 
@@ -27,6 +31,8 @@ go version                                                                      
 psql --version                                                                  # 18.x
 psql -d postgres -tAc "select rolsuper from pg_roles where rolname = current_user"   # t
 echo "$PATH" | grep -q "$(go env GOPATH)/bin" && echo "PATH ok"                 # PATH ok
+gcc --version                                                                   # prints the gcc version
+claude --version                                                                # prints the Claude Code version
 ```
 
 If the superuser check fails: `sudo -u postgres createuser --superuser $USER && sudo -u postgres createdb $USER`.
