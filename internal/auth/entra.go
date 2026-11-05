@@ -19,6 +19,10 @@ import (
 // flowCookie holds the state, nonce, and PKCE verifier for one sign-in attempt.
 const flowCookie = "__Host-signin-flow"
 
+// errEntraReturnedError is returned when the callback carries an error
+// parameter instead of an authorization code.
+var errEntraReturnedError = errors.New("entra ID returned an error instead of an authorization code")
+
 // Entra signs users in with Microsoft Entra ID through OpenID Connect, using the
 // authorization code flow with PKCE (Web-App Development Stack v2.0, Section 10.1).
 // Entra ID establishes who the person is; the application's users table decides
@@ -94,8 +98,10 @@ func (e *Entra) Finish(w http.ResponseWriter, r *http.Request) (Identity, error)
 	if r.URL.Query().Get("state") != state {
 		return Identity{}, errors.New("sign-in state mismatch")
 	}
-	if msg := r.URL.Query().Get("error"); msg != "" {
-		return Identity{}, fmt.Errorf("entra ID returned an error: %s", msg)
+	if r.URL.Query().Get("error") != "" {
+		// The callback is public, so the error parameter is untrusted text.
+		// It is not copied into the error, which the caller logs.
+		return Identity{}, errEntraReturnedError
 	}
 
 	tok, err := e.oauth.Exchange(r.Context(), r.URL.Query().Get("code"), oauth2.VerifierOption(verifier))
