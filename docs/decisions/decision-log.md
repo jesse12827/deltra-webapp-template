@@ -43,5 +43,5 @@ Add new entries at the top. Do not delete entries; a Changed or Rejected entry s
 - Rationale: directed by the Approver on 2026-11-05. Enforcing the rule belongs with the user
   administration feature that will call it.
 - Reversibility: easy. Nothing calls `LinkUser` yet.
-- Status: Assumed
-- Approver note:
+- Status: Ratified
+- Approver note: Ratified by Jesse Garcia, CEO, 2026-11-05.
