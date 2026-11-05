@@ -2,7 +2,7 @@
 -- Run as  : PostgreSQL administrator (postgres), connected to the application's database.
 -- Changes : Creates the schema if missing and (re)applies privileges. Safe to run again.
 -- Prereq  : 001_roles.sql has run, and the database exists, owned by webapp_owner.
--- Stack   : Web-App Development Stack v2.0, Sections 9.1–9.3.
+-- Stack   : Web-App Development Stack, Sections 9.1–9.3.
 
 CREATE SCHEMA IF NOT EXISTS webapp AUTHORIZATION webapp_owner;
 

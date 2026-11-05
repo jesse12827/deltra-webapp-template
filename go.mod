@@ -3,7 +3,7 @@ module deltra/webapp
 go 1.27
 
 // Dependencies are added and pinned by `go mod tidy` on first build.
-// Approved dependencies: Web-App Development Stack v2.0, Section 5.
+// Approved dependencies: Web-App Development Stack, Section 5.
 
 require (
 	github.com/coreos/go-oidc/v3 v3.21.0

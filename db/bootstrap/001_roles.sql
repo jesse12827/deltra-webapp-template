@@ -1,7 +1,7 @@
 -- Purpose : Create the application's two database roles.
 -- Run as  : PostgreSQL administrator (postgres), connected to any database.
 -- Changes : Creates roles if missing. Safe to run again; changes nothing if they exist.
--- Stack   : Web-App Development Stack v2.0, Sections 9.2 and 9.3.
+-- Stack   : Web-App Development Stack, Sections 9.2 and 9.3.
 --
 -- webapp_owner  owns the schema and its objects; used only to run migrations.
 -- webapp_app    the running application; receives only the grants made in migrations.

@@ -100,7 +100,7 @@ func (rd *renderer) execute(w http.ResponseWriter, r *http.Request, status int, 
 }
 
 // serverError logs err with the request identifier and shows the user a
-// generic message with that identifier (Web-App Development Stack v2.0, Section 10.7).
+// generic message with that identifier (Web-App Development Stack, Section 10.7).
 func (s *server) serverError(w http.ResponseWriter, r *http.Request, err error) {
 	id := requestid.From(r.Context())
 	s.Logger.ErrorContext(r.Context(), "server error", "err", err, "request_id", id, "path", r.URL.Path)

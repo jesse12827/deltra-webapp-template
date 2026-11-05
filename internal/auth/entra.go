@@ -24,7 +24,7 @@ const flowCookie = "__Host-signin-flow"
 var errEntraReturnedError = errors.New("entra ID returned an error instead of an authorization code")
 
 // Entra signs users in with Microsoft Entra ID through OpenID Connect, using the
-// authorization code flow with PKCE (Web-App Development Stack v2.0, Section 10.1).
+// authorization code flow with PKCE (Web-App Development Stack, Section 10.1).
 // Entra ID establishes who the person is; the application's users table decides
 // whether they may use the application and in which role.
 type Entra struct {
@@ -162,7 +162,7 @@ func identityFromClaims(c idClaims, tenantID string) (Identity, error) {
 // exchangeError describes a failed authorization-code exchange for the log.
 // When Entra ID rejects the exchange, it keeps only the HTTP status and the
 // OAuth error code, never the response body, which could repeat the code
-// (security final re-review 2026-11-05, finding 1). Other failures, such as
+// (Stack Section 12). Other failures, such as
 // network errors, carry no response body and are wrapped unchanged.
 func exchangeError(err error) error {
 	var re *oauth2.RetrieveError

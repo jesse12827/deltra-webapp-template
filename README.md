@@ -1,7 +1,7 @@
 # deltra-webapp-template
 
 The reference template for Deltra web applications: the working implementation of
-**Web-App Development Stack v2.0, Part A**. Every new Deltra web application starts as a copy of
+**Web-App Development Stack v2.1, Part A**. Every new Deltra web application starts as a copy of
 this repository (Stack Section 3).
 
 It is a small but complete application. It has Entra ID sign-in (with development sign-in for

@@ -3,7 +3,7 @@ package web_test
 // Acceptance-style tests for the template's standard behavior. They exercise the
 // whole application over HTTPS against a disposable database, signed in through
 // development sign-in. Name application tests after SRS acceptance tests, for
-// example TestAT01_LoginLogout (Web-App Development Stack v2.0, Section 13.1).
+// example TestAT01_LoginLogout (Web-App Development Stack, Section 13.1).
 
 import (
 	"context"
@@ -336,7 +336,7 @@ func TestUnknownRecordShowsNotFound(t *testing.T) {
 }
 
 // Signing in ends any session the browser already had
-// (Stack Section 10.2 and security review 2026-11-05, finding 1).
+// (Stack Section 10.2).
 func TestSignInReplacesExistingSession(t *testing.T) {
 	a := newApp(t)
 	c := a.signIn(a.tech)
@@ -365,7 +365,7 @@ func TestSignInReplacesExistingSession(t *testing.T) {
 }
 
 // The session and its signin.success event commit together
-// (security review 2026-11-05, finding 4).
+// (Stack Section 10.2).
 func TestSigninAuditFailureLeavesNoSession(t *testing.T) {
 	a := newApp(t)
 	a.failAudit("signin.success")
@@ -397,7 +397,7 @@ func TestSigninDeniedAuditFailureFailsRequest(t *testing.T) {
 }
 
 // An authorization denial that cannot be audited fails the request; access is
-// still refused (security review 2026-11-05, finding 5).
+// still refused (Stack Section 12).
 func TestAccessDeniedAuditFailureFailsRequest(t *testing.T) {
 	a := newApp(t)
 	c := a.signIn(a.tech)
@@ -412,7 +412,7 @@ func TestAccessDeniedAuditFailureFailsRequest(t *testing.T) {
 }
 
 // Sign-out and its audit event commit together: if the event cannot be
-// recorded, the request fails (security review 2026-11-05, finding 5).
+// recorded, the request fails (Stack Section 12).
 func TestSignoutAuditFailureFailsRequest(t *testing.T) {
 	a := newApp(t)
 	c := a.signIn(a.tech)
@@ -425,7 +425,7 @@ func TestSignoutAuditFailureFailsRequest(t *testing.T) {
 	}
 }
 
-// Pages are not stored by caches; static files are (security review 2026-11-05, finding 6).
+// Pages are not stored by caches; static files are (Stack Section 10.6).
 func TestSignedInPagesAreNotCached(t *testing.T) {
 	a := newApp(t)
 	c := a.signIn(a.tech)
@@ -440,7 +440,7 @@ func TestSignedInPagesAreNotCached(t *testing.T) {
 }
 
 // The server refuses to register development sign-in outside development, even
-// if configuration validation were bypassed (security review 2026-11-05, finding 2).
+// if configuration validation were bypassed (Stack Section 10.1).
 func TestServerRefusesDevSigninOutsideDevelopment(t *testing.T) {
 	for _, env := range []config.Env{config.Acceptance, config.Production} {
 		_, err := web.New(web.Deps{

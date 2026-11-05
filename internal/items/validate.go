@@ -33,7 +33,7 @@ type Clean struct {
 type FieldErrors map[string]string
 
 // Validate checks every field and returns all problems at once, so the user
-// can correct them in a single pass (Web-App Development Stack v2.0, Section 10.5).
+// can correct them in a single pass (Web-App Development Stack, Section 10.5).
 func (in Input) Validate() (Clean, FieldErrors) {
 	errs := FieldErrors{}
 	c := Clean{

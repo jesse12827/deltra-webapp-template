@@ -8,7 +8,7 @@ import (
 )
 
 // tokenBytes is the session token length: 32 bytes from crypto/rand
-// (Web-App Development Stack v2.0, Section 10.2).
+// (Web-App Development Stack, Section 10.2).
 const tokenBytes = 32
 
 // NewToken returns a random URL-safe token and the SHA-256 hash that is stored

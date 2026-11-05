@@ -1,5 +1,5 @@
 # sqlc compiles db/queries/*.sql into Go code in internal/dbgen.
-# Web-App Development Stack v2.0, Section 9.5. Run with: make generate
+# Web-App Development Stack, Section 9.5. Run with: make generate
 version: "2"
 sql:
   - engine: "postgresql"

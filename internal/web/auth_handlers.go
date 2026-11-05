@@ -72,7 +72,7 @@ func (s *server) entraCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Match on the tenant ID and object ID only, never on email
-	// (Phase 0 security review, 2026-11-05, finding 3).
+	// (Stack Section 10.1).
 	u, err := auth.FindUser(r.Context(), s.q, id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		s.denySignin(w, r, nil, unlinkedReason(id))
@@ -87,16 +87,14 @@ func (s *server) entraCallback(w http.ResponseWriter, r *http.Request) {
 // unlinkedReason is the signin.denied reason for an Entra ID account that no
 // application user is linked to. It names the tenant and object IDs, which an
 // administrator needs to link the account, and never the email claim, which
-// the directory controls (security re-review 2026-11-05, finding 1).
+// the directory controls (Stack Section 10.1).
 func unlinkedReason(id auth.Identity) string {
 	return "no application user for Entra ID tenant " + id.TenantID + ", object " + id.ObjectID
 }
 
 // completeSignin admits an active user. In one transaction it ends any session
 // the browser already had, starts a new one, and records the audit event, so a
-// failed audit write leaves no session behind. Stack Section 10.2 requires a
-// new token at sign-in and Section 12 requires the audit event; the single
-// transaction follows the Phase 0 security review (2026-11-05, findings 1 and 4).
+// failed audit write leaves no session behind (Stack Sections 10.2 and 12).
 func (s *server) completeSignin(w http.ResponseWriter, r *http.Request, u dbgen.User) {
 	if !u.Active {
 		s.denySignin(w, r, &u.ID, "account inactive")

@@ -20,7 +20,7 @@ const (
 )
 
 // FindUser matches on the tenant ID and object ID only, never on email
-// (security review 2026-11-05, finding 3).
+// (Stack Section 10.1).
 func TestFindUserMatchesOnTenantAndObjectID(t *testing.T) {
 	ctx := context.Background()
 	q := dbgen.New(testdb.New(t))

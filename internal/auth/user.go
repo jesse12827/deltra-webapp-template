@@ -1,5 +1,5 @@
 // Package auth handles sign-in, server-side sessions, and authorization checks
-// (Web-App Development Stack v2.0, Sections 10.1–10.3).
+// (Web-App Development Stack, Sections 10.1–10.3).
 package auth
 
 import "context"

@@ -1,5 +1,5 @@
 // Package database opens connections and runs migrations
-// (Web-App Development Stack v2.0, Sections 9.2 and 9.4).
+// (Web-App Development Stack, Sections 9.2 and 9.4).
 package database
 
 import (
@@ -16,7 +16,7 @@ import (
 	"deltra/webapp/db"
 )
 
-// Schema is the application's schema (Web-App Development Stack v2.0, Section 9.1).
+// Schema is the application's schema (Web-App Development Stack, Section 9.1).
 const Schema = "webapp"
 
 // Open returns a connection pool for databaseURL.
