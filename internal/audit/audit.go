@@ -1,5 +1,5 @@
 // Package audit records audit events in the application database and the log
-// (Web-App Development Stack v2.1, Section 12). Audit events are append-only:
+// (Web-App Development Stack, Section 12). Audit events are append-only:
 // the application role may insert and read them, never change or delete them.
 package audit
 

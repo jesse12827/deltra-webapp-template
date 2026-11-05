@@ -1,7 +1,7 @@
 # User guide
 
 Replace this guide with the application's own user and administrator guide
-(Web-App Development Stack v2.1, Section 19). The template's example application works as follows.
+(Web-App Development Stack, Section 19). The template's example application works as follows.
 
 ## Signing in
 Choose **Sign in with Microsoft** and use your Deltra work account. If you see "Access denied",

@@ -1,6 +1,6 @@
 // Package config loads and validates all configuration at startup.
 // The application refuses to start with missing or invalid configuration
-// (Web-App Development Stack v2.1, Section 11).
+// (Web-App Development Stack, Section 11).
 package config
 
 import (
@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-// Env is the operating environment (Web-App Development Stack v2.1, Section 16).
+// Env is the operating environment (Web-App Development Stack, Section 16).
 type Env string
 
 const (
@@ -137,7 +137,7 @@ func Load(getenv func(string) string) (Config, error) {
 
 // ReadSecret returns the named secret. In every environment it is read from
 // the systemd credentials directory when CREDENTIALS_DIRECTORY is set
-// (Web-App Development Stack v2.1, Section 10.8). Outside production only,
+// (Web-App Development Stack, Section 10.8). Outside production only,
 // it may instead come from the environment variable SECRET_<NAME>
 // (for example SECRET_ENTRA_CLIENT_SECRET), holding a development-only value.
 func ReadSecret(name string, env Env, getenv func(string) string) (string, error) {

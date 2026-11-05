@@ -1,7 +1,7 @@
 # Data dictionary
 
 Schema: `webapp`. Update this file in the same Pull Request as any migration that changes the schema
-(Web-App Development Stack v2.1, Section 9.6).
+(Web-App Development Stack, Section 9.6).
 
 ## users
 

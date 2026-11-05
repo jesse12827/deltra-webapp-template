@@ -9,7 +9,7 @@ import (
 )
 
 // TestMigrationsUpDownUp is the migration quality gate
-// (Web-App Development Stack v2.1, Section 13.2): every migration must apply,
+// (Web-App Development Stack, Section 13.2): every migration must apply,
 // roll back completely, and apply again.
 func TestMigrationsUpDownUp(t *testing.T) {
 	ctx := context.Background()

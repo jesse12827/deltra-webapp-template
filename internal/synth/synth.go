@@ -1,5 +1,5 @@
 // Package synth defines synthetic data for development, acceptance testing, and
-// automated tests (AI Policy Section 26A.7; Web-App Development Stack v2.1,
+// automated tests (AI Policy Section 26A.7; Web-App Development Stack,
 // Section 13.1). Output depends only on the seed, so results are repeatable.
 // No value here may be copied from a real client, staff member, or production system.
 package synth

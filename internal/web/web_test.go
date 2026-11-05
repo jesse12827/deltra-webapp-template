@@ -3,7 +3,7 @@ package web_test
 // Acceptance-style tests for the template's standard behavior. They exercise the
 // whole application over HTTPS against a disposable database, signed in through
 // development sign-in. Name application tests after SRS acceptance tests, for
-// example TestAT01_LoginLogout (Web-App Development Stack v2.1, Section 13.1).
+// example TestAT01_LoginLogout (Web-App Development Stack, Section 13.1).
 
 import (
 	"context"

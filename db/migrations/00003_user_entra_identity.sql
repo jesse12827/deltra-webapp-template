@@ -1,7 +1,7 @@
 -- Users are matched to their Microsoft Entra ID account on the immutable
 -- tenant ID (tid) and object ID (oid) claims, never on email or
 -- preferred_username, which directory administrators can change
--- (Web-App Development Stack v2.1, Section 10.1). Both columns are empty for
+-- (Web-App Development Stack, Section 10.1). Both columns are empty for
 -- users who have no Entra ID account, such as synthetic development users;
 -- such users cannot sign in through Entra ID.
 

@@ -14,7 +14,7 @@ import (
 // FindUser returns the application user linked to an Entra ID identity. It
 // matches only on the tenant ID and object ID, never on email, because email
 // and preferred_username can be changed by directory administrators
-// (Web-App Development Stack v2.1, Section 10.1). It returns pgx.ErrNoRows
+// (Web-App Development Stack, Section 10.1). It returns pgx.ErrNoRows
 // when no user is linked to the identity.
 func FindUser(ctx context.Context, q *dbgen.Queries, id Identity) (dbgen.User, error) {
 	tid, err := uuidParam(id.TenantID)

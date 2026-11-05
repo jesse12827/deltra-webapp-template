@@ -1,5 +1,5 @@
 # systemd unit. Installed by the Approver as /etc/systemd/system/webapp.service.
-# Web-App Development Stack v2.1, Section 15. See docs/operations/runbook.md.
+# Web-App Development Stack, Section 15. See docs/operations/runbook.md.
 [Unit]
 Description=webapp (Deltra web application)
 After=network-online.target postgresql.service
