@@ -49,6 +49,7 @@
       "Edit(./.golangci.yml)",
       "Edit(./.github/workflows/**)",
       "Edit(./docs/standards/**)"
-    ]
+    ],
+    "defaultMode": "default"
   }
 }
