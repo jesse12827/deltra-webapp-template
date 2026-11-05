@@ -62,6 +62,11 @@ func (s *server) recoverPanics(next http.Handler) http.Handler {
 
 // securityHeaders sets the response headers required by
 // Web-App Development Stack v2.0, Section 10.6. Nginx adds Strict-Transport-Security.
+//
+// It also sets Cache-Control: no-store, which Section 10.6 does not list: it
+// keeps signed-in pages out of shared caches and the browser's back-forward
+// cache (Phase 0 security review, 2026-11-05, finding 6). cacheStatic
+// replaces it for /static/.
 func securityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()
@@ -69,6 +74,7 @@ func securityHeaders(next http.Handler) http.Handler {
 			"default-src 'self'; script-src 'self'; style-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'")
 		h.Set("X-Content-Type-Options", "nosniff")
 		h.Set("Referrer-Policy", "same-origin")
+		h.Set("Cache-Control", "no-store")
 		next.ServeHTTP(w, r)
 	})
 }
@@ -121,7 +127,9 @@ func (s *server) requireRole(role auth.Role, h http.HandlerFunc) http.Handler {
 				UserID: audit.Ptr(u.ID), Action: "access.denied",
 				Detail: map[string]string{"method": r.Method, "path": r.URL.Path, "required_role": string(role)},
 			}); err != nil {
-				s.Logger.ErrorContext(r.Context(), "recording access denial", "err", err)
+				// Fail closed: access is still refused, and the request fails.
+				s.serverError(w, r, err)
+				return
 			}
 			s.render.page(w, r, http.StatusForbidden, "error", pageData{
 				Title: "Access denied",

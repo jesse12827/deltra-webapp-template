@@ -35,6 +35,14 @@ func NewSessions(db dbgen.DBTX, idle, absolute time.Duration) *Sessions {
 	return &Sessions{q: dbgen.New(db), idle: idle, absolute: absolute, now: time.Now}
 }
 
+// WithTx returns a copy of the store that works inside tx, so that a session
+// change and its audit event commit or fail together.
+func (s *Sessions) WithTx(tx pgx.Tx) *Sessions {
+	c := *s
+	c.q = s.q.WithTx(tx)
+	return &c
+}
+
 // Create starts a new session for userID and returns its token.
 // Callers create a new session at every sign-in, so a token is never reused.
 func (s *Sessions) Create(ctx context.Context, userID int64) (token string, expires time.Time, err error) {

@@ -18,10 +18,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"deltra/webapp/internal/auth"
 	"deltra/webapp/internal/config"
+	"deltra/webapp/internal/database"
 	"deltra/webapp/internal/dbgen"
 	"deltra/webapp/internal/items"
 	"deltra/webapp/internal/testdb"
@@ -32,6 +34,7 @@ type app struct {
 	t      *testing.T
 	srv    *httptest.Server
 	pool   *pgxpool.Pool
+	dbURL  string // administrator connection to the same database
 	q      *dbgen.Queries
 	admin  dbgen.User
 	tech   dbgen.User
@@ -40,7 +43,7 @@ type app struct {
 
 func newApp(t *testing.T) *app {
 	t.Helper()
-	pool := testdb.New(t)
+	pool, dbURL := testdb.NewWithURL(t)
 	q := dbgen.New(pool)
 	ctx := context.Background()
 	mk := func(email, role string, active bool) dbgen.User {
@@ -50,7 +53,7 @@ func newApp(t *testing.T) *app {
 		}
 		return u
 	}
-	a := &app{t: t, pool: pool, q: q,
+	a := &app{t: t, pool: pool, dbURL: dbURL, q: q,
 		admin:  mk("admin@synthetic.test", "admin", true),
 		tech:   mk("tech@synthetic.test", "tech", true),
 		former: mk("former@synthetic.test", "tech", false),
@@ -139,6 +142,58 @@ func (a *app) post(c *http.Client, path string, form url.Values) response {
 func (a *app) postBody(c *http.Client, path string, form url.Values) (response, string) {
 	a.t.Helper()
 	return a.do(c, http.MethodPost, path, form)
+}
+
+// failAudit makes every later insert of an audit event with this action fail,
+// using a trigger installed by the test as the database administrator. The
+// trigger exists only in this test's disposable database; it is never part of
+// a migration.
+func (a *app) failAudit(action string) {
+	a.t.Helper()
+	ctx := context.Background()
+	conn, err := pgx.Connect(ctx, a.dbURL)
+	if err != nil {
+		a.t.Fatal(err)
+	}
+	defer func() { _ = conn.Close(ctx) }()
+	schema := pgx.Identifier{database.Schema}.Sanitize()
+	if _, err := conn.Exec(ctx, "CREATE OR REPLACE FUNCTION "+schema+`.test_fail_audit() RETURNS trigger
+		LANGUAGE plpgsql AS $$
+		BEGIN
+			IF NEW.action = ANY (TG_ARGV) THEN
+				RAISE EXCEPTION 'test: audit write refused for %', NEW.action;
+			END IF;
+			RETURN NEW;
+		END $$`); err != nil {
+		a.t.Fatal(err)
+	}
+	trigger := pgx.Identifier{"test_fail_audit_" + strings.ReplaceAll(action, ".", "_")}.Sanitize()
+	if _, err := conn.Exec(ctx, "CREATE TRIGGER "+trigger+" BEFORE INSERT ON "+schema+".audit_events"+
+		" FOR EACH ROW EXECUTE FUNCTION "+schema+".test_fail_audit("+pgx.Identifier{action}.Sanitize()+")"); err != nil {
+		a.t.Fatal(err)
+	}
+}
+
+// sessionCount returns how many sessions u has.
+func (a *app) sessionCount(u dbgen.User) int {
+	a.t.Helper()
+	var n int
+	if err := a.pool.QueryRow(context.Background(), "SELECT count(*) FROM sessions WHERE user_id = $1", u.ID).Scan(&n); err != nil {
+		a.t.Fatal(err)
+	}
+	return n
+}
+
+// sessionCookie returns the session token held in c's cookie jar.
+func (a *app) sessionCookie(c *http.Client) string {
+	a.t.Helper()
+	u, _ := url.Parse(a.srv.URL)
+	for _, ck := range c.Jar.Cookies(u) {
+		if ck.Name == auth.CookieName {
+			return ck.Value
+		}
+	}
+	return ""
 }
 
 func TestSignedOutUserIsRedirectedToSignIn(t *testing.T) {
@@ -277,5 +332,123 @@ func TestUnknownRecordShowsNotFound(t *testing.T) {
 	a := newApp(t)
 	if res, _ := a.get(a.signIn(a.tech), "/items/999999"); res.StatusCode != http.StatusNotFound {
 		t.Fatalf("status %d, want 404", res.StatusCode)
+	}
+}
+
+// Signing in ends any session the browser already had
+// (Stack Section 10.2 and security review 2026-11-05, finding 1).
+func TestSignInReplacesExistingSession(t *testing.T) {
+	a := newApp(t)
+	c := a.signIn(a.tech)
+	old := a.sessionCookie(c)
+	if old == "" {
+		t.Fatal("no session cookie after sign-in")
+	}
+	if res := a.post(c, "/signin/dev", url.Values{"user_id": {strconv.FormatInt(a.admin.ID, 10)}}); res.StatusCode != http.StatusSeeOther {
+		t.Fatalf("second sign-in: status %d", res.StatusCode)
+	}
+	if now := a.sessionCookie(c); now == "" || now == old {
+		t.Fatal("second sign-in did not issue a new session token")
+	}
+	if n := a.sessionCount(a.tech); n != 0 {
+		t.Fatalf("earlier session still stored: %d sessions for the first user", n)
+	}
+	if n := a.sessionCount(a.admin); n != 1 {
+		t.Fatalf("%d sessions for the new user, want 1", n)
+	}
+	replay := a.client()
+	u, _ := url.Parse(a.srv.URL)
+	replay.Jar.SetCookies(u, []*http.Cookie{{Name: auth.CookieName, Value: old, Path: "/", Secure: true, HttpOnly: true, SameSite: http.SameSiteLaxMode}})
+	if res, _ := a.get(replay, "/"); res.StatusCode != http.StatusSeeOther || res.Header.Get("Location") != "/signin" {
+		t.Fatalf("old token: status %d, location %q; want redirect to sign-in", res.StatusCode, res.Header.Get("Location"))
+	}
+}
+
+// The session and its signin.success event commit together
+// (security review 2026-11-05, finding 4).
+func TestSigninAuditFailureLeavesNoSession(t *testing.T) {
+	a := newApp(t)
+	a.failAudit("signin.success")
+	c := a.client()
+	res := a.post(c, "/signin/dev", url.Values{"user_id": {strconv.FormatInt(a.tech.ID, 10)}})
+	if res.StatusCode != http.StatusInternalServerError {
+		t.Fatalf("status %d, want 500", res.StatusCode)
+	}
+	if a.sessionCookie(c) != "" {
+		t.Error("session cookie set although the sign-in was not audited")
+	}
+	if n := a.sessionCount(a.tech); n != 0 {
+		t.Errorf("%d session rows remain, want 0", n)
+	}
+}
+
+// A sign-in denial that cannot be audited fails the request; sign-in is still refused.
+func TestSigninDeniedAuditFailureFailsRequest(t *testing.T) {
+	a := newApp(t)
+	a.failAudit("signin.denied")
+	c := a.client()
+	res := a.post(c, "/signin/dev", url.Values{"user_id": {strconv.FormatInt(a.former.ID, 10)}})
+	if res.StatusCode != http.StatusInternalServerError {
+		t.Fatalf("status %d, want 500", res.StatusCode)
+	}
+	if a.sessionCookie(c) != "" || a.sessionCount(a.former) != 0 {
+		t.Error("inactive user was given a session")
+	}
+}
+
+// An authorization denial that cannot be audited fails the request; access is
+// still refused (security review 2026-11-05, finding 5).
+func TestAccessDeniedAuditFailureFailsRequest(t *testing.T) {
+	a := newApp(t)
+	c := a.signIn(a.tech)
+	a.failAudit("access.denied")
+	res, body := a.get(c, "/admin/audit")
+	if res.StatusCode != http.StatusInternalServerError {
+		t.Fatalf("status %d, want 500", res.StatusCode)
+	}
+	if strings.Contains(body, "Audit log") {
+		t.Error("admin page content shown to a tech user")
+	}
+}
+
+// Sign-out and its audit event commit together: if the event cannot be
+// recorded, the request fails (security review 2026-11-05, finding 5).
+func TestSignoutAuditFailureFailsRequest(t *testing.T) {
+	a := newApp(t)
+	c := a.signIn(a.tech)
+	a.failAudit("signout")
+	if res := a.post(c, "/signout", nil); res.StatusCode != http.StatusInternalServerError {
+		t.Fatalf("status %d, want 500", res.StatusCode)
+	}
+	if n := a.sessionCount(a.tech); n != 1 {
+		t.Fatalf("%d sessions after failed sign-out, want the session unchanged", n)
+	}
+}
+
+// Pages are not stored by caches; static files are (security review 2026-11-05, finding 6).
+func TestSignedInPagesAreNotCached(t *testing.T) {
+	a := newApp(t)
+	c := a.signIn(a.tech)
+	for _, path := range []string{"/", "/items", "/signin"} {
+		if res, _ := a.get(c, path); res.Header.Get("Cache-Control") != "no-store" {
+			t.Errorf("%s: Cache-Control %q, want no-store", path, res.Header.Get("Cache-Control"))
+		}
+	}
+	if res, _ := a.get(c, "/static/css/style.css"); res.Header.Get("Cache-Control") != "public, max-age=3600" {
+		t.Errorf("static: Cache-Control %q", res.Header.Get("Cache-Control"))
+	}
+}
+
+// The server refuses to register development sign-in outside development, even
+// if configuration validation were bypassed (security review 2026-11-05, finding 2).
+func TestServerRefusesDevSigninOutsideDevelopment(t *testing.T) {
+	for _, env := range []config.Env{config.Acceptance, config.Production} {
+		_, err := web.New(web.Deps{
+			Config: config.Config{Env: env, AuthMode: config.AuthDev},
+			Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+		})
+		if err == nil {
+			t.Errorf("%s: development sign-in was registered", env)
+		}
 	}
 }

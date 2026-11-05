@@ -5,6 +5,7 @@ package web
 
 import (
 	"context"
+	"errors"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -55,6 +56,10 @@ func New(d Deps) (http.Handler, error) {
 	mux.Handle("GET /static/", cacheStatic(http.StripPrefix("/static/", http.FileServerFS(static))))
 	mux.HandleFunc("GET /signin", s.signinPage)
 	if d.Config.AuthMode == config.AuthDev {
+		// Configuration already refuses dev mode outside development; this is a second check.
+		if d.Config.Env != config.Development {
+			return nil, errors.New("development sign-in is permitted only when APP_ENV=development")
+		}
 		mux.HandleFunc("POST /signin/dev", s.devSignin)
 	} else {
 		mux.HandleFunc("GET /signin/entra", s.entraBegin)

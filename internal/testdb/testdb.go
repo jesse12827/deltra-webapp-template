@@ -100,6 +100,15 @@ func Empty(t testing.TB) string {
 // disposable database. The database is dropped when the test ends.
 func New(t testing.TB) *pgxpool.Pool {
 	t.Helper()
+	pool, _ := NewWithURL(t)
+	return pool
+}
+
+// NewWithURL is New that also returns an administrator connection URL for the
+// same database, for tests that must change it in ways the application role
+// cannot, such as installing a trigger that makes a write fail.
+func NewWithURL(t testing.TB) (*pgxpool.Pool, string) {
+	t.Helper()
 	ctx := context.Background()
 	dbURL := Empty(t)
 
@@ -121,7 +130,7 @@ func New(t testing.TB) *pgxpool.Pool {
 		t.Fatal(err)
 	}
 	t.Cleanup(pool.Close)
-	return pool
+	return pool, dbURL
 }
 
 // OwnerRole and AppRole are exported for tests that need to name the roles.
