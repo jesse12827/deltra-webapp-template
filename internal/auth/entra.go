@@ -162,7 +162,7 @@ func identityFromClaims(c idClaims, tenantID string) (Identity, error) {
 // exchangeError describes a failed authorization-code exchange for the log.
 // When Entra ID rejects the exchange, it keeps only the HTTP status and the
 // OAuth error code, never the response body, which could repeat the code
-// (security final re-review 2026-11-05, finding 1). Other failures, such as
+// (Stack Section 12). Other failures, such as
 // network errors, carry no response body and are wrapped unchanged.
 func exchangeError(err error) error {
 	var re *oauth2.RetrieveError

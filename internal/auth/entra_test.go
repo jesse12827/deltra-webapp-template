@@ -17,8 +17,7 @@ const (
 )
 
 // The callback's error parameter is untrusted text from a public route, so it
-// never reaches the error that the handler logs (security final review
-// 2026-11-05, finding 1).
+// never reaches the error that the handler logs (Stack Section 12).
 func TestFinishDoesNotCopyCallbackErrorText(t *testing.T) {
 	const injected = "attacker-supplied-text-0123456789"
 	q := url.Values{"state": {"s"}, "error": {injected}, "error_description": {injected}}
@@ -36,7 +35,7 @@ func TestFinishDoesNotCopyCallbackErrorText(t *testing.T) {
 
 // When Entra ID rejects the code exchange, the logged error keeps only the HTTP
 // status and the OAuth error code, never the response body, which could repeat
-// the authorization code (security final re-review 2026-11-05, finding 1).
+// the authorization code (Stack Section 12).
 func TestFinishLogsOnlyStatusAndCodeWhenExchangeFails(t *testing.T) {
 	const authCode = "synthetic-authorization-code-0123456789"
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -69,7 +68,7 @@ func TestFinishLogsOnlyStatusAndCodeWhenExchangeFails(t *testing.T) {
 }
 
 // Users are identified by the tid and oid claims, never by email or
-// preferred_username (security review 2026-11-05, finding 3).
+// preferred_username (Stack Section 10.1).
 func TestIdentityFromClaims(t *testing.T) {
 	tests := []struct {
 		name    string

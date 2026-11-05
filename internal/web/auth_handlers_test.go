@@ -8,7 +8,7 @@ import (
 )
 
 // The denial recorded for an unlinked Entra ID account names the tenant and
-// object IDs and never the email claim (security re-review 2026-11-05, finding 1).
+// object IDs and never the email claim (Stack Section 10.1).
 func TestUnlinkedReasonNamesIDsNotEmail(t *testing.T) {
 	id := auth.Identity{
 		TenantID: "00000000-0000-4000-8000-0000000000aa",

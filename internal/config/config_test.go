@@ -35,7 +35,7 @@ func TestLoadDevelopmentDefaults(t *testing.T) {
 }
 
 // Development sign-in needs no authentication, so it is refused in every
-// environment except development (security review 2026-11-05, finding 2).
+// environment except development (Stack Section 10.1).
 func TestLoadRejectsDevAuthOutsideDevelopment(t *testing.T) {
 	for _, appEnv := range []string{"acceptance", "production"} {
 		t.Run(appEnv, func(t *testing.T) {
