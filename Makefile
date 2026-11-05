@@ -143,7 +143,7 @@ standards-pin: ## Move docs/standards to another deltra-standards version (Appro
 init: ## Rename the template for a new application
 	@echo "$(NAME)" | grep -Eq '^[a-z]+$$' || { echo "NAME must be lowercase letters only"; exit 1; }
 	@test -d cmd/webapp || { echo "Template already initialized"; exit 1; }
-	@test -f go.sum -a -d internal/dbgen || { echo "The template's first build is not done. Run it in deltra-webapp-template first (README, \"First build of the template itself\")."; exit 1; }
+	@test -f go.sum -a -d internal/dbgen || { echo "The template's first build is not done. Run it in deltra-webapp-template first (README Section 2, \"First build of the template itself\")."; exit 1; }
 	git mv cmd/webapp cmd/$(NAME)
 	git mv deploy/webapp.service deploy/$(NAME).service
 	git mv deploy/nginx-webapp.conf deploy/nginx-$(NAME).conf

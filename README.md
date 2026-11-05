@@ -11,29 +11,76 @@ Agents, and one **example domain**, "items". Items demonstrates every standard p
 filtering, sorting, and pagination; validated forms with field-level errors; concurrent-edit
 protection; status counts on a dashboard; and per-record history.
 
-## Start a new application
+Read the sections below in order: **1** once per machine, **2** once for the template, **3** for each new application.
+
+## 1. Prerequisites (development machine)
+
+- Debian 13 (or any Linux) with **Go 1.27** and **PostgreSQL 18** installed locally
+- Your PostgreSQL role is a superuser on the local server (for creating disposable test databases)
+- Go's `bin` folder is on your `PATH`, so the tools `make tools` installs can be found
+- Claude Code is installed, and your Git name and email are set (`git config --global user.name` / `user.email`)
+
+Check:
+
+```sh
+go version                                                                      # go1.27 or later
+psql --version                                                                  # 18.x
+psql -d postgres -tAc "select rolsuper from pg_roles where rolname = current_user"   # t
+echo "$PATH" | grep -q "$(go env GOPATH)/bin" && echo "PATH ok"                 # PATH ok
+```
+
+If the superuser check fails: `sudo -u postgres createuser --superuser $USER && sudo -u postgres createdb $USER`.
+If the PATH check prints nothing: add `export PATH="$PATH:$(go env GOPATH)/bin"` to `~/.bashrc` and open a new terminal.
+
+## 2. First build of the template itself (once, before any application)
+
+The template was written without network access to the Go module proxy, so its first build downloads and
+pins its dependencies and generates the database code. It is done once. It is already done if
+`ls go.sum internal/dbgen` lists both; then skip to Section 3.
+
+Claude Code does the work, on a branch (Change Management Standard Section 134C):
+
+```sh
+cd ~/development/deltra-webapp-template
+git switch -c phase0-first-build
+claude --model opus --add-dir ../deltra-standards
+```
+
+Give Claude Code this instruction:
+
+> Do the template's first build: run `make tools`, pin the four tool versions in the Makefile to the
+> versions installed, run `make generate`, run `go mod tidy`, then `make check`. Fix whatever
+> `make check` reports, keeping to the Web-App Development Stack. Commit the result on this branch,
+> including `go.sum` and `internal/dbgen`. Don't push.
+
+When Claude Code has finished, the Approver pushes the branch, opens a Pull Request to `main` on GitHub,
+waits for the check to pass, and squash-merges it. Then, on the development machine:
+
+```sh
+git switch main && git pull
+ls go.sum internal/dbgen     # both listed: the template is ready to copy
+```
+
+## 3. Start a new application
 
 Conventions (Web-App Development Stack Section 3): the folder, the GitHub repository, and the `make init`
 name are one lowercase name, never tied to a host; `deltra-standards`, this template, and each application
 are sibling folders under one parent folder; the layout comes only from copying this template.
 
 The Approver performs these steps. The example uses `procurement` and the parent folder `~/development`.
-
-**Before you start:** the template's own first build (below) must be done and committed.
-`ls deltra-webapp-template/go.sum deltra-webapp-template/internal/dbgen` must list both; if either is
-missing, do "First build of the template itself" first. `make init` refuses to run until it is done.
-Replace every `<...>` placeholder below with its real value, angle brackets included.
+Section 2 must be done first; `make init` refuses to run until it is. Replace every `<...>` placeholder
+with its real value, angle brackets included.
 
 ```sh
 cd ~/development                                  # holds deltra-standards/ and deltra-webapp-template/
 
-# 1. One copy of the template, with a fresh history
+# 1. One copy of the template, with a fresh history (cp creates the procurement folder)
 cp -r deltra-webapp-template procurement
 cd procurement
 rm -rf .git && git init -b main
 git add -A && git commit -m "Start from deltra-webapp-template"
 
-# 2. Adapt the copy: rename it, then link the governing documents (deltra-standards must be on GitHub)
+# 2. Adapt the copy: rename it, then link the governing documents (deltra-standards must be on GitHub, tagged)
 make init NAME=procurement MODULE=github.com/<org>/procurement
 make standards STANDARDS_URL=git@github.com:<org>/deltra-standards.git STANDARDS_REF=<tag>
 make check                # the renamed copy must still pass every quality gate
@@ -41,7 +88,7 @@ make check                # the renamed copy must still pass every quality gate
 # 3. Add the application's own files: its approved SRS, and its CLAUDE.md
 #    (the skeleton with "What this application is" and "own additions" filled in)
 cp <path>/<Application>_Software_Requirements_Specification_v<n>.md docs/requirements/
-editor CLAUDE.md          # fill in the two sections, or copy a prepared CLAUDE.md over the skeleton
+editor CLAUDE.md          # nano, vim, ...: fill in the two sections, or copy a prepared CLAUDE.md over the skeleton
 git add -A && git commit -m "Retool for <application>: SRS, CLAUDE.md, standards <tag>"
 ```
 
@@ -57,12 +104,6 @@ with the application's own, guided by the SRS.
 
 When cloning an existing application, fetch the standards too: `git clone --recurse-submodules <url>`.
 
-## Prerequisites (development machine)
-
-- Debian 13 (or any Linux) with **Go 1.27** and **PostgreSQL 18** installed locally
-- Your PostgreSQL role is a superuser on the local server (for creating disposable test databases)
-- `make tools` installs sqlc, golangci-lint, govulncheck, and gitleaks
-
 ## Everyday commands
 
 | Command | Purpose |
@@ -73,20 +114,6 @@ When cloning an existing application, fetch the standards too: `git clone --recu
 | `make synth` | Load synthetic data |
 | `make run` | Run at http://localhost:8080 with development sign-in |
 | `make build` | Build the release binary and its checksum into `bin/` |
-
-## First build of the template itself
-
-The template was written without network access to the Go module proxy, so its first build also
-pins its dependencies and generates code:
-
-```sh
-make tools          # then pin the four tool versions in the Makefile
-make generate       # creates internal/dbgen
-go mod tidy         # adds and pins pgx, goose, go-oidc, and oauth2
-make check
-```
-
-Fix anything `make check` reports, and commit the result, including `go.sum` and `internal/dbgen`.
 
 ## Layout
 
