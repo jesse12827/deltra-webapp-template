@@ -133,7 +133,7 @@ func Load(getenv func(string) string) (Config, error) {
 // (for example SECRET_ENTRA_CLIENT_SECRET), holding a development-only value.
 func ReadSecret(name string, env Env, getenv func(string) string) (string, error) {
 	if dir := getenv("CREDENTIALS_DIRECTORY"); dir != "" {
-		b, err := os.ReadFile(filepath.Join(dir, filepath.Base(name)))
+		b, err := readCredential(dir, filepath.Base(name))
 		if err == nil {
 			return strings.TrimSpace(string(b)), nil
 		}
@@ -148,6 +148,17 @@ func ReadSecret(name string, env Env, getenv func(string) string) (string, error
 		}
 	}
 	return "", fmt.Errorf("secret %s not found in the systemd credentials directory", name)
+}
+
+// readCredential reads one file from the credentials directory through an
+// os.Root, so the name cannot resolve outside that directory.
+func readCredential(dir, name string) ([]byte, error) {
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = root.Close() }()
+	return root.ReadFile(name)
 }
 
 func durationOr(s string, def time.Duration, name string, errs *[]error) time.Duration {

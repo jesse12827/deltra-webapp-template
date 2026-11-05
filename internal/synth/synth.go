@@ -43,7 +43,7 @@ var (
 // includes edge cases: empty descriptions, no due date, maximum-length titles,
 // and titles containing LIKE wildcard characters.
 func Items(seed uint64, n int) []Item {
-	r := rand.New(rand.NewPCG(seed, seed^0x9e3779b97f4a7c15))
+	r := rand.New(rand.NewPCG(seed, seed^0x9e3779b97f4a7c15)) //nolint:gosec // seeded and repeatable by design; not used for security
 	base := time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)
 	out := make([]Item, 0, n)
 	for i := range n {

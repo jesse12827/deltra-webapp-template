@@ -13,11 +13,11 @@ ADMIN_DATABASE_URL ?= postgres:///postgres?host=/var/run/postgresql
 TEST_DATABASE_URL  ?= $(ADMIN_DATABASE_URL)
 DEV_DB             ?= $(APP)_dev
 
-# Tool versions. Pin these to exact versions after the first `make tools`.
-SQLC_VERSION          ?= latest
-GOLANGCI_LINT_VERSION ?= latest
-GOVULNCHECK_VERSION   ?= latest
-GITLEAKS_VERSION      ?= latest
+# Tool versions, pinned at the template's first build.
+SQLC_VERSION          ?= v1.31.1
+GOLANGCI_LINT_VERSION ?= v2.15.0
+GOVULNCHECK_VERSION   ?= v1.9.0
+GITLEAKS_VERSION      ?= v8.30.1
 
 # Development-mode environment for `make run` and `make synth`.
 DEV_ENV := APP_ENV=development \

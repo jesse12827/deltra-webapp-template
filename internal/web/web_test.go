@@ -87,36 +87,58 @@ func (a *app) signIn(u dbgen.User) *http.Client {
 	return c
 }
 
-func (a *app) get(c *http.Client, path string) (*http.Response, string) {
-	a.t.Helper()
-	res, err := c.Get(a.srv.URL + path)
-	if err != nil {
-		a.t.Fatal(err)
-	}
-	defer res.Body.Close()
-	b, _ := io.ReadAll(res.Body)
-	return res, string(b)
+// response is what the tests inspect. The helpers read and close the body,
+// so no test holds an open *http.Response.
+type response struct {
+	StatusCode int
+	Header     http.Header
 }
 
-func (a *app) post(c *http.Client, path string, form url.Values) *http.Response {
+// do sends one request with the test's context and returns the response and body.
+func (a *app) do(c *http.Client, method, path string, form url.Values) (response, string) {
 	a.t.Helper()
-	res, err := c.PostForm(a.srv.URL+path, form)
+	var body io.Reader
+	if form != nil {
+		body = strings.NewReader(form.Encode())
+	}
+	req, err := http.NewRequestWithContext(a.t.Context(), method, a.srv.URL+path, body)
 	if err != nil {
 		a.t.Fatal(err)
 	}
-	_ = res.Body.Close()
+	if form != nil {
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
+	res, err := c.Do(req)
+	if err != nil {
+		a.t.Fatal(err)
+	}
+	b, err := io.ReadAll(res.Body)
+	if cerr := res.Body.Close(); err == nil {
+		err = cerr
+	}
+	if err != nil {
+		a.t.Fatal(err)
+	}
+	return response{StatusCode: res.StatusCode, Header: res.Header}, string(b)
+}
+
+func (a *app) get(c *http.Client, path string) (response, string) {
+	a.t.Helper()
+	return a.do(c, http.MethodGet, path, nil)
+}
+
+func (a *app) post(c *http.Client, path string, form url.Values) response {
+	a.t.Helper()
+	if form == nil {
+		form = url.Values{}
+	}
+	res, _ := a.do(c, http.MethodPost, path, form)
 	return res
 }
 
-func (a *app) postBody(c *http.Client, path string, form url.Values) (*http.Response, string) {
+func (a *app) postBody(c *http.Client, path string, form url.Values) (response, string) {
 	a.t.Helper()
-	res, err := c.PostForm(a.srv.URL+path, form)
-	if err != nil {
-		a.t.Fatal(err)
-	}
-	defer res.Body.Close()
-	b, _ := io.ReadAll(res.Body)
-	return res, string(b)
+	return a.do(c, http.MethodPost, path, form)
 }
 
 func TestSignedOutUserIsRedirectedToSignIn(t *testing.T) {
@@ -221,7 +243,10 @@ func TestConcurrentEditIsRejected(t *testing.T) {
 func TestCrossOriginPostIsRejected(t *testing.T) {
 	a := newApp(t)
 	c := a.signIn(a.tech)
-	req, _ := http.NewRequest(http.MethodPost, a.srv.URL+"/items", strings.NewReader("title=forged"))
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, a.srv.URL+"/items", strings.NewReader("title=forged"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Sec-Fetch-Site", "cross-site") // what a browser sends for a forged cross-site form
 	res, err := c.Do(req)

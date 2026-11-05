@@ -73,7 +73,7 @@ func (e *Entra) Finish(w http.ResponseWriter, r *http.Request) (string, error) {
 	if err != nil {
 		return "", errors.New("sign-in flow cookie missing or expired")
 	}
-	http.SetCookie(w, &http.Cookie{Name: flowCookie, Value: "", Path: "/", MaxAge: -1, Secure: true, HttpOnly: true})
+	http.SetCookie(w, &http.Cookie{Name: flowCookie, Value: "", Path: "/", MaxAge: -1, Secure: true, HttpOnly: true, SameSite: http.SameSiteLaxMode})
 
 	parts := strings.Split(c.Value, ".")
 	if len(parts) != 3 {
