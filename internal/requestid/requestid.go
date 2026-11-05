@@ -1,6 +1,6 @@
 // Package requestid gives every HTTP request an identifier that appears in
 // logs, audit events, and user-facing error pages, so a problem a user reports
-// can be traced (Web-App Development Stack v2.0, Sections 10.7 and 12).
+// can be traced (Web-App Development Stack v2.1, Sections 10.7 and 12).
 package requestid
 
 import (

@@ -1,7 +1,7 @@
 // Package db embeds the SQL files that the application binary needs at run
 // time. It is one of only two Go files outside cmd/ and internal/, because Go's
 // embed feature can include only files at or below the embedding file's directory
-// (Web-App Development Stack v2.0, Section 6).
+// (Web-App Development Stack v2.1, Section 6).
 package db
 
 import "embed"

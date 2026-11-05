@@ -1,5 +1,5 @@
 # Single source of build, test, and check commands.
-# Web-App Development Stack v2.0, Sections 13 and 14.
+# Web-App Development Stack v2.1, Sections 13 and 14.
 # Changes to the `check` targets are Critical changes (Change Management Standard, Section 44).
 
 APP      ?= webapp

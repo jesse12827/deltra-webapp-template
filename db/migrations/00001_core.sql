@@ -1,6 +1,6 @@
 -- Core tables every Deltra web application needs: users, sessions, audit events.
 -- Tables are created unqualified; the migration connection's search_path is the
--- application schema (Web-App Development Stack v2.0, Section 9).
+-- application schema (Web-App Development Stack v2.1, Section 9).
 
 -- +goose Up
 

@@ -24,7 +24,7 @@ const flowCookie = "__Host-signin-flow"
 var errEntraReturnedError = errors.New("entra ID returned an error instead of an authorization code")
 
 // Entra signs users in with Microsoft Entra ID through OpenID Connect, using the
-// authorization code flow with PKCE (Web-App Development Stack v2.0, Section 10.1).
+// authorization code flow with PKCE (Web-App Development Stack v2.1, Section 10.1).
 // Entra ID establishes who the person is; the application's users table decides
 // whether they may use the application and in which role.
 type Entra struct {

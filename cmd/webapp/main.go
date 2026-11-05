@@ -1,5 +1,5 @@
 // Command webapp is the application binary. It contains its templates, static
-// files, and migrations (Web-App Development Stack v2.0, Section 14).
+// files, and migrations (Web-App Development Stack v2.1, Section 14).
 //
 // Subcommands:
 //
@@ -139,7 +139,7 @@ func purgeExpiredSessions(ctx context.Context, s *auth.Sessions, logger *slog.Lo
 }
 
 // migrate runs schema migrations. In production the Approver runs it with the
-// owner role, following docs/operations/runbook.md (Web-App Development Stack v2.0, Section 9.4).
+// owner role, following docs/operations/runbook.md (Web-App Development Stack v2.1, Section 9.4).
 func migrate(args []string, getenv func(string) string, stdout io.Writer) error {
 	if len(args) != 1 {
 		return errors.New("usage: migrate up|down|status")

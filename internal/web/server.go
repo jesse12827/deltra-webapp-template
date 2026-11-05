@@ -1,5 +1,5 @@
 // Package web is the HTTP layer: routes, middleware, handlers, and template
-// rendering (Web-App Development Stack v2.0, Section 7). Handlers parse and
+// rendering (Web-App Development Stack v2.1, Section 7). Handlers parse and
 // validate input, call domain packages, and render. Handlers contain no SQL.
 package web
 

@@ -13,7 +13,7 @@ import (
 )
 
 // CookieName is the session cookie. The __Host- prefix makes browsers require
-// Secure, Path=/, and no Domain attribute (Web-App Development Stack v2.0, Section 10.2).
+// Secure, Path=/, and no Domain attribute (Web-App Development Stack v2.1, Section 10.2).
 const CookieName = "__Host-session"
 
 // ErrNoSession means the request has no valid session.

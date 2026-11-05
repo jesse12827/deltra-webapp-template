@@ -1,7 +1,7 @@
 # Operations runbook — webapp
 
 Performed by the **Approver only**. Agents prepare and update this runbook; they never run it against
-production (AI Policy Section 26A.9; Web-App Development Stack v2.0, Section 15).
+production (AI Policy Section 26A.9; Web-App Development Stack v2.1, Section 15).
 
 Placeholders: `vX.Y.Z` is the release version. Commands run on the production server unless stated.
 

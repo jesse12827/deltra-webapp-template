@@ -1,7 +1,7 @@
 // Package testdb creates a disposable PostgreSQL database for one test,
 // built exactly as production is: bootstrap scripts, then migrations as the
 // owner role, then a pool that runs as the application role
-// (Web-App Development Stack v2.0, Section 13.1).
+// (Web-App Development Stack v2.1, Section 13.1).
 //
 // Set TEST_DATABASE_URL to an administrator connection URL on a local
 // development server, for example: postgres:///postgres?host=/var/run/postgresql

@@ -1,4 +1,4 @@
-# Runs every quality gate on each Pull Request and on main (Web-App Development Stack v2.0, Section 13.2).
+# Runs every quality gate on each Pull Request and on main (Web-App Development Stack v2.1, Section 13.2).
 # Changes to this file are Critical changes (Change Management Standard, Section 44).
 name: check
 

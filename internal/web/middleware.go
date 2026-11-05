@@ -117,7 +117,7 @@ func (s *server) requireUser(h http.HandlerFunc) http.Handler {
 }
 
 // requireRole allows only signed-in users holding role. Denials are audited
-// (Web-App Development Stack v2.0, Section 12).
+// (Web-App Development Stack v2.1, Section 12).
 func (s *server) requireRole(role auth.Role, h http.HandlerFunc) http.Handler {
 	return s.requireUser(func(w http.ResponseWriter, r *http.Request) {
 		u, _ := auth.UserFrom(r.Context())
