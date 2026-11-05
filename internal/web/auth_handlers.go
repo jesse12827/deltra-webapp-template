@@ -75,13 +75,21 @@ func (s *server) entraCallback(w http.ResponseWriter, r *http.Request) {
 	// (Phase 0 security review, 2026-11-05, finding 3).
 	u, err := auth.FindUser(r.Context(), s.q, id)
 	if errors.Is(err, pgx.ErrNoRows) {
-		s.denySignin(w, r, nil, "no application user for Entra ID tenant "+id.TenantID+", object "+id.ObjectID)
+		s.denySignin(w, r, nil, unlinkedReason(id))
 		return
 	} else if err != nil {
 		s.serverError(w, r, err)
 		return
 	}
 	s.completeSignin(w, r, u)
+}
+
+// unlinkedReason is the signin.denied reason for an Entra ID account that no
+// application user is linked to. It names the tenant and object IDs, which an
+// administrator needs to link the account, and never the email claim, which
+// the directory controls (security re-review 2026-11-05, finding 1).
+func unlinkedReason(id auth.Identity) string {
+	return "no application user for Entra ID tenant " + id.TenantID + ", object " + id.ObjectID
 }
 
 // completeSignin admits an active user. In one transaction it ends any session

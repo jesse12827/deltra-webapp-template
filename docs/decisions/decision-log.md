@@ -25,4 +25,23 @@ Add new entries at the top. Do not delete entries; a Changed or Rejected entry s
 
 ## Entries
 
-(none yet)
+### D-001: Every caller of LinkUser writes an audit event in the same transaction
+- Date: 2026-11-05
+- Related: No SRS (template). Security re-review 2026-11-05, finding 2
+  (`docs/evidence/template-security-hardening/reviews/security-reviewer-2026-11-05-rerun.md`);
+  Stack Section 12 (user and role administration is audited).
+- Decision: `auth.LinkUser` decides which Entra ID account can sign in as an application user.
+  Any code that calls it must, in the same transaction, write an audit event (for example
+  `user.link_entra`) that records the user and the old and new tenant and object IDs. For now the
+  rule is documented on `LinkUser` and `SetUserEntraID` only, because nothing calls them. It is to
+  be enforced in code, for example by having `LinkUser` take the transaction and write the audit
+  event itself, when user administration is built. Until then the Approver links users with the
+  SQL in runbook Section 5.1.
+- Alternatives considered: make `LinkUser` write the audit event now (rejected: it has no caller,
+  and no acting user exists to attribute the event to); remove `LinkUser` until it is needed
+  (rejected: the tests use it to set up linked users).
+- Rationale: directed by the Approver on 2026-11-05. Enforcing the rule belongs with the user
+  administration feature that will call it.
+- Reversibility: easy. Nothing calls `LinkUser` yet.
+- Status: Assumed
+- Approver note:
