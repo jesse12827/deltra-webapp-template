@@ -7,12 +7,14 @@ package dbgen
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (email, display_name, role, active)
 VALUES (lower($1::text), $2, $3, $4)
-RETURNING id, email, display_name, role, active, created_at, updated_at
+RETURNING id, email, display_name, role, active, created_at, updated_at, entra_tid, entra_oid
 `
 
 type CreateUserParams struct {
@@ -38,12 +40,14 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EntraTid,
+		&i.EntraOid,
 	)
 	return i, err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, email, display_name, role, active, created_at, updated_at FROM users WHERE id = $1
+SELECT id, email, display_name, role, active, created_at, updated_at, entra_tid, entra_oid FROM users WHERE id = $1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
@@ -57,12 +61,14 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EntraTid,
+		&i.EntraOid,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, display_name, role, active, created_at, updated_at FROM users WHERE email = lower($1::text)
+SELECT id, email, display_name, role, active, created_at, updated_at, entra_tid, entra_oid FROM users WHERE email = lower($1::text)
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -76,12 +82,41 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EntraTid,
+		&i.EntraOid,
+	)
+	return i, err
+}
+
+const getUserByEntraID = `-- name: GetUserByEntraID :one
+SELECT id, email, display_name, role, active, created_at, updated_at, entra_tid, entra_oid FROM users WHERE entra_tid = $1 AND entra_oid = $2
+`
+
+type GetUserByEntraIDParams struct {
+	EntraTid pgtype.UUID
+	EntraOid pgtype.UUID
+}
+
+// Entra ID sign-in matches only on the tenant ID and object ID claims.
+func (q *Queries) GetUserByEntraID(ctx context.Context, arg GetUserByEntraIDParams) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByEntraID, arg.EntraTid, arg.EntraOid)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.DisplayName,
+		&i.Role,
+		&i.Active,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.EntraTid,
+		&i.EntraOid,
 	)
 	return i, err
 }
 
 const listActiveUsers = `-- name: ListActiveUsers :many
-SELECT id, email, display_name, role, active, created_at, updated_at FROM users WHERE active ORDER BY display_name, id
+SELECT id, email, display_name, role, active, created_at, updated_at, entra_tid, entra_oid FROM users WHERE active ORDER BY display_name, id
 `
 
 func (q *Queries) ListActiveUsers(ctx context.Context) ([]User, error) {
@@ -101,6 +136,8 @@ func (q *Queries) ListActiveUsers(ctx context.Context) ([]User, error) {
 			&i.Active,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.EntraTid,
+			&i.EntraOid,
 		); err != nil {
 			return nil, err
 		}
@@ -110,4 +147,21 @@ func (q *Queries) ListActiveUsers(ctx context.Context) ([]User, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const setUserEntraID = `-- name: SetUserEntraID :exec
+UPDATE users
+SET entra_tid = $1, entra_oid = $2, updated_at = now()
+WHERE id = $3
+`
+
+type SetUserEntraIDParams struct {
+	EntraTid pgtype.UUID
+	EntraOid pgtype.UUID
+	ID       int64
+}
+
+func (q *Queries) SetUserEntraID(ctx context.Context, arg SetUserEntraIDParams) error {
+	_, err := q.db.Exec(ctx, setUserEntraID, arg.EntraTid, arg.EntraOid, arg.ID)
+	return err
 }

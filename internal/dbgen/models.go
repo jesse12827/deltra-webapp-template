@@ -6,6 +6,8 @@ package dbgen
 
 import (
 	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type AuditEvent struct {
@@ -48,4 +50,6 @@ type User struct {
 	Active      bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	EntraTid    pgtype.UUID
+	EntraOid    pgtype.UUID
 }

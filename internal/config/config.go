@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -26,8 +27,11 @@ const (
 // Authentication modes.
 const (
 	AuthEntra = "entra" // Microsoft Entra ID through OpenID Connect
-	AuthDev   = "dev"   // Development sign-in as a synthetic user; never in production
+	AuthDev   = "dev"   // Development sign-in as a synthetic user; only when APP_ENV=development
 )
+
+// guidPattern matches a GUID such as an Entra ID tenant ID.
+var guidPattern = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
 
 // Config is the complete application configuration.
 type Config struct {
@@ -97,6 +101,9 @@ func Load(getenv func(string) string) (Config, error) {
 		}
 		if c.Entra.TenantID == "" || c.Entra.ClientID == "" {
 			errs = append(errs, errors.New("ENTRA_TENANT_ID and ENTRA_CLIENT_ID are required when AUTH_MODE=entra"))
+		} else if !guidPattern.MatchString(c.Entra.TenantID) {
+			// Users are matched on the tid claim, which is always a GUID.
+			errs = append(errs, errors.New("ENTRA_TENANT_ID must be the tenant's GUID, not a domain name"))
 		}
 		secret, err := ReadSecret("entra-client-secret", c.Env, getenv)
 		if err != nil {
@@ -104,8 +111,10 @@ func Load(getenv func(string) string) (Config, error) {
 		}
 		c.Entra.ClientSecret = secret
 	case AuthDev:
-		if c.Env == Production {
-			errs = append(errs, errors.New("AUTH_MODE=dev is not permitted in production"))
+		// Development sign-in needs no authentication, so it is refused in
+		// acceptance as well as production.
+		if c.Env != Development {
+			errs = append(errs, fmt.Errorf("AUTH_MODE=dev is permitted only when APP_ENV=development (got %q)", c.Env))
 		}
 	default:
 		errs = append(errs, fmt.Errorf("AUTH_MODE must be entra or dev (got %q)", c.AuthMode))

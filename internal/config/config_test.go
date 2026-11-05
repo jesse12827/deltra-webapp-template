@@ -34,13 +34,37 @@ func TestLoadDevelopmentDefaults(t *testing.T) {
 	}
 }
 
-func TestLoadRejectsDevAuthInProduction(t *testing.T) {
+// Development sign-in needs no authentication, so it is refused in every
+// environment except development (security review 2026-11-05, finding 2).
+func TestLoadRejectsDevAuthOutsideDevelopment(t *testing.T) {
+	for _, appEnv := range []string{"acceptance", "production"} {
+		t.Run(appEnv, func(t *testing.T) {
+			m := devEnv()
+			m["APP_ENV"] = appEnv
+			m["BASE_URL"] = "https://app.example.test"
+			_, err := Load(env(m))
+			if err == nil || !strings.Contains(err.Error(), "AUTH_MODE=dev is permitted only when APP_ENV=development") {
+				t.Fatalf("want dev-auth rejection, got %v", err)
+			}
+		})
+	}
+	if _, err := Load(env(devEnv())); err != nil {
+		t.Fatalf("development: unexpected error %v", err)
+	}
+}
+
+func TestLoadRequiresTenantGUIDForEntra(t *testing.T) {
 	m := devEnv()
-	m["APP_ENV"] = "production"
-	m["BASE_URL"] = "https://app.example.test"
-	_, err := Load(env(m))
-	if err == nil || !strings.Contains(err.Error(), "AUTH_MODE=dev is not permitted in production") {
-		t.Fatalf("want dev-auth rejection, got %v", err)
+	m["AUTH_MODE"] = "entra"
+	m["ENTRA_CLIENT_ID"] = "c"
+	m["SECRET_ENTRA_CLIENT_SECRET"] = "dev-only"
+	m["ENTRA_TENANT_ID"] = "contoso.example"
+	if _, err := Load(env(m)); err == nil || !strings.Contains(err.Error(), "ENTRA_TENANT_ID must be the tenant's GUID") {
+		t.Fatalf("domain-name tenant: want rejection, got %v", err)
+	}
+	m["ENTRA_TENANT_ID"] = "00000000-0000-4000-8000-000000000001"
+	if _, err := Load(env(m)); err != nil {
+		t.Fatalf("GUID tenant: unexpected error %v", err)
 	}
 }
 

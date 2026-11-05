@@ -169,3 +169,22 @@ Record the result and the date of the test.
 | Check health | `curl -fsS http://127.0.0.1:8080/healthz` |
 | Purge expired sessions manually | `sudo -u postgres psql -d webapp -f db/scripts/purge_expired_sessions.sql` (the application also does this hourly) |
 | Rotate the Entra ID client secret | Create a new secret in Entra ID, re-run the `systemd-creds encrypt` step in 1.4, `sudo systemctl restart webapp`, then delete the old secret in Entra ID |
+
+### 5.1 Adding an application user
+
+Entra ID sign-in matches a user on their Entra ID tenant ID and object ID, never on email. Until the
+application has a user administration page, the Approver adds users with SQL. Find the user's
+**Object ID** on their profile in the Microsoft Entra admin center, and the **Tenant ID** on the
+tenant overview (it is the same value as `ENTRA_TENANT_ID`).
+
+```sh
+sudo -u postgres psql -d webapp -v ON_ERROR_STOP=1 \
+  -v email='person@deltra.example' -v name='Person Name' -v role='tech' \
+  -v tid='<tenant-id>' -v oid='<object-id>' <<'SQL'
+INSERT INTO webapp.users (email, display_name, role, entra_tid, entra_oid)
+VALUES (lower(:'email'), :'name', :'role', :'tid', :'oid');
+SQL
+```
+
+A person whose Entra ID account is not linked this way is refused at sign-in, and the refusal is
+recorded as a `signin.denied` audit event that names the object ID they signed in with.

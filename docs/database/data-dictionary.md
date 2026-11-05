@@ -10,11 +10,17 @@ Application users. Microsoft Entra ID establishes identity; this table decides a
 | Column | Type | Null | Meaning |
 |---|---|---|---|
 | id | bigint identity | no | Primary key |
-| email | text | no | Lower-case work email; matches the Entra ID account; unique |
+| email | text | no | Lower-case work email, for contact and display; unique. Never used to match an Entra ID sign-in |
 | display_name | text | no | Name shown in the interface (1–200 characters) |
 | role | text | no | `admin` or `tech` |
 | active | boolean | no | Inactive users cannot sign in |
 | created_at, updated_at | timestamptz | no | Provenance |
+| entra_tid | uuid | yes | Entra ID tenant ID (`tid` claim) of the user's account |
+| entra_oid | uuid | yes | Entra ID object ID (`oid` claim) of the user's account |
+
+`entra_tid` and `entra_oid` are both set or both empty, and each pair belongs to at most one user.
+Entra ID sign-in matches a user on this pair only (Stack Section 10.1). A user with both empty,
+such as a synthetic development user, cannot sign in through Entra ID.
 
 Privileges for `webapp_app`: SELECT, INSERT, UPDATE.
 

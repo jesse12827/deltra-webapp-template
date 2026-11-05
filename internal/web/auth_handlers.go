@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 
@@ -36,7 +37,7 @@ func (s *server) signinPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // devSignin signs in as a synthetic user. It is registered only when
-// AUTH_MODE=dev, which configuration refuses in production.
+// AUTH_MODE=dev, which configuration permits only when APP_ENV=development.
 func (s *server) devSignin(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(r.PostFormValue("user_id"), 10, 64)
 	if err != nil {
@@ -64,15 +65,16 @@ func (s *server) entraBegin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) entraCallback(w http.ResponseWriter, r *http.Request) {
-	email, err := s.Entra.Finish(w, r)
+	id, err := s.Entra.Finish(w, r)
 	if err != nil {
 		s.Logger.WarnContext(r.Context(), "Entra ID sign-in failed", "err", err)
 		s.denySignin(w, r, nil, "sign-in failed")
 		return
 	}
-	u, err := s.q.GetUserByEmail(r.Context(), email)
+	// Match on the tenant ID and object ID only, never on email (Stack Section 10.1).
+	u, err := auth.FindUser(r.Context(), s.q, id)
 	if errors.Is(err, pgx.ErrNoRows) {
-		s.denySignin(w, r, nil, "no application user for "+email)
+		s.denySignin(w, r, nil, "no application user for Entra ID object "+id.ObjectID+" ("+id.Email+")")
 		return
 	} else if err != nil {
 		s.serverError(w, r, err)
@@ -81,18 +83,33 @@ func (s *server) entraCallback(w http.ResponseWriter, r *http.Request) {
 	s.completeSignin(w, r, u)
 }
 
-// completeSignin admits an active user: a new session, a new cookie, and an audit event.
+// completeSignin admits an active user. In one transaction it ends any session
+// the browser already had, starts a new one, and records the audit event, so a
+// failed audit write leaves no session behind (Stack Sections 10.2 and 12).
 func (s *server) completeSignin(w http.ResponseWriter, r *http.Request, u dbgen.User) {
 	if !u.Active {
 		s.denySignin(w, r, &u.ID, "account inactive")
 		return
 	}
-	token, expires, err := s.Sessions.Create(r.Context(), u.ID)
+	ctx := r.Context()
+	var (
+		token   string
+		expires time.Time
+	)
+	err := pgx.BeginFunc(ctx, s.Pool, func(tx pgx.Tx) error {
+		sessions := s.Sessions.WithTx(tx)
+		if c, err := r.Cookie(auth.CookieName); err == nil {
+			if err := sessions.Delete(ctx, c.Value); err != nil {
+				return err
+			}
+		}
+		var err error
+		if token, expires, err = sessions.Create(ctx, u.ID); err != nil {
+			return err
+		}
+		return audit.Record(ctx, s.q.WithTx(tx), audit.Event{UserID: audit.Ptr(u.ID), Action: "signin.success"})
+	})
 	if err != nil {
-		s.serverError(w, r, err)
-		return
-	}
-	if err := audit.Record(r.Context(), s.q, audit.Event{UserID: audit.Ptr(u.ID), Action: "signin.success"}); err != nil {
 		s.serverError(w, r, err)
 		return
 	}
@@ -100,12 +117,14 @@ func (s *server) completeSignin(w http.ResponseWriter, r *http.Request, u dbgen.
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-// denySignin refuses access with a clear message and records why.
+// denySignin refuses access with a clear message and records why. If the
+// denial cannot be recorded, the request fails; sign-in is refused either way.
 func (s *server) denySignin(w http.ResponseWriter, r *http.Request, userID *int64, reason string) {
 	if err := audit.Record(r.Context(), s.q, audit.Event{
 		UserID: userID, Action: "signin.denied", Detail: map[string]string{"reason": reason},
 	}); err != nil {
-		s.Logger.ErrorContext(r.Context(), "recording sign-in denial", "err", err)
+		s.serverError(w, r, err)
+		return
 	}
 	s.render.page(w, r, http.StatusForbidden, "error", pageData{
 		Title: "Access denied",
@@ -115,16 +134,22 @@ func (s *server) denySignin(w http.ResponseWriter, r *http.Request, userID *int6
 	})
 }
 
+// signout deletes the session and records the event in one transaction. If the
+// event cannot be recorded, the request fails and the session is unchanged.
 func (s *server) signout(w http.ResponseWriter, r *http.Request) {
 	u, _ := auth.UserFrom(r.Context())
-	if c, err := r.Cookie(auth.CookieName); err == nil {
-		if err := s.Sessions.Delete(r.Context(), c.Value); err != nil {
-			s.serverError(w, r, err)
-			return
+	ctx := r.Context()
+	err := pgx.BeginFunc(ctx, s.Pool, func(tx pgx.Tx) error {
+		if c, err := r.Cookie(auth.CookieName); err == nil {
+			if err := s.Sessions.WithTx(tx).Delete(ctx, c.Value); err != nil {
+				return err
+			}
 		}
-	}
-	if err := audit.Record(r.Context(), s.q, audit.Event{UserID: audit.Ptr(u.ID), Action: "signout"}); err != nil {
-		s.Logger.ErrorContext(r.Context(), "recording sign-out", "err", err)
+		return audit.Record(ctx, s.q.WithTx(tx), audit.Event{UserID: audit.Ptr(u.ID), Action: "signout"})
+	})
+	if err != nil {
+		s.serverError(w, r, err)
+		return
 	}
 	auth.ClearCookie(w)
 	http.Redirect(w, r, "/signin", http.StatusSeeOther)
